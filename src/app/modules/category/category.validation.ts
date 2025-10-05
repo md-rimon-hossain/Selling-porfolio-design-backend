@@ -1,0 +1,64 @@
+import { z } from "zod";
+
+// Category creation validation schema
+export const createCategorySchema = z.object({
+  body: z.object({
+    name: z
+      .string({
+        required_error: "Category name is required",
+      })
+      .min(2, "Category name must be at least 2 characters long")
+      .max(50, "Category name cannot exceed 50 characters")
+      .regex(
+        /^[a-zA-Z\s]+$/,
+        "Category name can only contain letters and spaces",
+      ),
+
+    description: z
+      .string({
+        required_error: "Category description is required",
+      })
+      .min(10, "Description must be at least 10 characters long")
+      .max(200, "Description cannot exceed 200 characters"),
+
+    isActive: z.boolean().default(true),
+  }),
+});
+
+// Category update validation schema
+export const updateCategorySchema = z.object({
+  body: z.object({
+    name: z
+      .string()
+      .min(2, "Category name must be at least 2 characters long")
+      .max(50, "Category name cannot exceed 50 characters")
+      .regex(
+        /^[a-zA-Z\s]+$/,
+        "Category name can only contain letters and spaces",
+      )
+      .optional(),
+
+    description: z
+      .string()
+      .min(10, "Description must be at least 10 characters long")
+      .max(200, "Description cannot exceed 200 characters")
+      .optional(),
+
+    isActive: z.boolean().optional(),
+  }),
+});
+
+// Category params validation schema
+export const categoryParamsSchema = z.object({
+  params: z.object({
+    id: z
+      .string({
+        required_error: "Category ID is required",
+      })
+      .regex(/^[0-9a-fA-F]{24}$/, "Invalid category ID format"),
+  }),
+});
+
+export type CreateCategoryInput = z.TypeOf<typeof createCategorySchema>;
+export type UpdateCategoryInput = z.TypeOf<typeof updateCategorySchema>;
+export type CategoryParamsInput = z.TypeOf<typeof categoryParamsSchema>;

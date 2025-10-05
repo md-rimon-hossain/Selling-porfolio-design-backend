@@ -1,0 +1,2136 @@
+{
+  "info": {
+    "name": "Ecommerce Design Selling API",
+    "description": "Complete API collection for testing the ecommerce design selling platform with Zod validation",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customer_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "design_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "pricing_plan_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "purchase_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "review_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🏠 Health Check",
+      "item": [
+        {
+          "name": "Server Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/../../",
+              "host": ["{{base_url}}"],
+              "path": ["..", ".."]
+            },
+            "description": "Check if the server is running"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Register Admin User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('admin_token', response.data.token);",
+                  "    pm.environment.set('auth_token', response.data.token);",
+                  "    pm.environment.set('user_id', response.data.user.id);",
+                  "    pm.test('Admin registered successfully', function () {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "        pm.expect(response.data.user.role).to.eql('admin');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Admin User\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"AdminPass123\",\n  \"confirmPassword\": \"AdminPass123\",\n  \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new admin user"
+          },
+          "response": []
+        },
+        {
+          "name": "Register Customer User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('customer_token', response.data.token);",
+                  "    pm.test('Customer registered successfully', function () {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "        pm.expect(response.data.user.role).to.eql('customer');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"customer@example.com\",\n  \"password\": \"CustomerPass123\",\n  \"confirmPassword\": \"CustomerPass123\",\n  \"role\": \"customer\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new customer user"
+          },
+          "response": []
+        },
+        {
+          "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('admin_token', response.data.token);",
+                  "    pm.environment.set('auth_token', response.data.token);",
+                  "    pm.test('Admin login successful', function () {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "        pm.expect(response.data.user.role).to.eql('admin');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"AdminPass123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login with admin credentials"
+          },
+          "response": []
+        },
+        {
+          "name": "Login Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('customer_token', response.data.token);",
+                  "    pm.test('Customer login successful', function () {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "        pm.expect(response.data.user.role).to.eql('customer');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"CustomerPass123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login with customer credentials"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Invalid Registration - Validation Test",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jo\",\n  \"email\": \"invalid-email\",\n  \"password\": \"weak\",\n  \"confirmPassword\": \"different\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Test validation errors for invalid data"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Invalid Login - Wrong Credentials",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"wrong@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Test login with wrong credentials"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📂 Categories",
+      "item": [
+        {
+          "name": "Get All Categories (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories"]
+            },
+            "description": "Get all active categories - public endpoint"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Category (Admin Only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('category_id', response.data._id);",
+                  "    pm.test('Category created successfully', function () {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Logo Design\",\n  \"description\": \"Professional logo design services for businesses and startups\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories"]
+            },
+            "description": "Create a new category (requires admin authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Another Category",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Web Design\",\n  \"description\": \"Modern and responsive web design templates and mockups\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories"]
+            },
+            "description": "Create another category for testing"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/categories/{{category_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["categories", "{{category_id}}"]
+            },
+            "description": "Get a single category by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Category (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Premium Logo Design\",\n  \"description\": \"Premium professional logo design services for businesses, startups, and personal brands\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/categories/{{category_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["categories", "{{category_id}}"]
+            },
+            "description": "Update an existing category"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Create Category as Customer (Should Fail)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Unauthorized Category\",\n  \"description\": \"This should fail\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories"]
+            },
+            "description": "Test authorization - customer trying to create category should fail"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Invalid Category Data",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"A\",\n  \"description\": \"Short\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories"]
+            },
+            "description": "Test validation with invalid data"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Get Category with Invalid ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/categories/invalid-id",
+              "host": ["{{base_url}}"],
+              "path": ["categories", "invalid-id"]
+            },
+            "description": "Test parameter validation with invalid ObjectId"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🎨 Designs",
+      "item": [
+        {
+          "name": "Get All Designs (Authenticated)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designs",
+              "host": ["{{base_url}}"],
+              "path": ["designs"]
+            },
+            "description": "Get all active designs (requires authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Designs with Query Parameters",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designs?page=1&limit=10&complexityLevel=Intermediate&minPrice=50&maxPrice=200",
+              "host": ["{{base_url}}"],
+              "path": ["designs"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "complexityLevel",
+                  "value": "Intermediate"
+                },
+                {
+                  "key": "minPrice",
+                  "value": "50"
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "200"
+                }
+              ]
+            },
+            "description": "Get designs with filtering and pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Design (Admin Only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('design_id', response.data._id);",
+                  "    pm.test('Design created successfully', function () {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Modern Corporate Logo\",\n  \"category\": \"{{category_id}}\",\n  \"description\": \"A sleek and modern corporate logo design perfect for tech companies and startups. Features clean lines and contemporary typography.\",\n  \"previewImageUrl\": \"https://example.com/preview/modern-corporate-logo.jpg\",\n  \"designerName\": \"Jane Smith\",\n  \"usedTools\": [\"Adobe Illustrator\", \"Photoshop\", \"Figma\"],\n  \"effectsUsed\": [\"Gradient\", \"Drop Shadow\", \"Typography Effects\"],\n  \"price\": 149.99,\n  \"processDescription\": \"The design process began with extensive research into modern corporate branding trends. Multiple concepts were developed and refined through client feedback iterations. The final design combines minimalist aesthetics with strong brand recognition elements.\",\n  \"complexityLevel\": \"Intermediate\",\n  \"tags\": [\"logo\", \"corporate\", \"modern\", \"tech\", \"startup\"],\n  \"status\": \"Active\",\n  \"likesCount\": 0,\n  \"downloadCount\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/designs",
+              "host": ["{{base_url}}"],
+              "path": ["designs"]
+            },
+            "description": "Create a new design (requires admin authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Another Design",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Creative Brand Identity Package\",\n  \"category\": \"{{category_id}}\",\n  \"description\": \"Complete brand identity package including logo, business cards, and brand guidelines for creative agencies.\",\n  \"previewImageUrl\": \"https://example.com/preview/brand-identity-package.jpg\",\n  \"designerName\": \"Mike Johnson\",\n  \"usedTools\": [\"Adobe Creative Suite\", \"Sketch\", \"InDesign\"],\n  \"effectsUsed\": [\"Color Harmony\", \"Typography Pairing\", \"Layout Design\"],\n  \"price\": 299.99,\n  \"processDescription\": \"This comprehensive brand identity project involved creating a cohesive visual system that reflects the client's creative values and market positioning.\",\n  \"complexityLevel\": \"Advanced\",\n  \"tags\": [\"branding\", \"identity\", \"creative\", \"package\", \"professional\"],\n  \"status\": \"Active\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/designs",
+              "host": ["{{base_url}}"],
+              "path": ["designs"]
+            },
+            "description": "Create another design for testing"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single Design",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designs/{{design_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["designs", "{{design_id}}"]
+            },
+            "description": "Get a single design by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Design (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Premium Modern Corporate Logo\",\n  \"price\": 199.99,\n  \"description\": \"Updated description: A premium sleek and modern corporate logo design perfect for established tech companies and growing startups.\",\n  \"tags\": [\"logo\", \"corporate\", \"modern\", \"tech\", \"startup\", \"premium\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/designs/{{design_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["designs", "{{design_id}}"]
+            },
+            "description": "Update an existing design"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Get Designs Without Authentication",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designs",
+              "host": ["{{base_url}}"],
+              "path": ["designs"]
+            },
+            "description": "Test authentication requirement - should fail without token"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Create Design as Customer (Should Fail)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Unauthorized Design\",\n  \"category\": \"{{category_id}}\",\n  \"description\": \"This should fail\",\n  \"previewImageUrl\": \"https://example.com/test.jpg\",\n  \"designerName\": \"Customer User\",\n  \"usedTools\": [\"Paint\"],\n  \"effectsUsed\": [\"None\"],\n  \"price\": 10,\n  \"processDescription\": \"Simple process\",\n  \"complexityLevel\": \"Basic\",\n  \"tags\": [\"test\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/designs",
+              "host": ["{{base_url}}"],
+              "path": ["designs"]
+            },
+            "description": "Test authorization - customer trying to create design should fail"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Invalid Design Data",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Lo\",\n  \"category\": \"invalid-category-id\",\n  \"description\": \"Short\",\n  \"previewImageUrl\": \"not-a-url\",\n  \"price\": -10,\n  \"usedTools\": [],\n  \"effectsUsed\": [],\n  \"complexityLevel\": \"Invalid\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/designs",
+              "host": ["{{base_url}}"],
+              "path": ["designs"]
+            },
+            "description": "Test validation with invalid design data"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Get Design with Invalid ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designs/invalid-design-id",
+              "host": ["{{base_url}}"],
+              "path": ["designs", "invalid-design-id"]
+            },
+            "description": "Test parameter validation with invalid ObjectId"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Design (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designs/{{design_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["designs", "{{design_id}}"]
+            },
+            "description": "Delete a design (admin only) - Run this last to clean up"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔒 Authorization Tests",
+      "item": [
+        {
+          "name": "❌ Access Protected Route Without Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designs",
+              "host": ["{{base_url}}"],
+              "path": ["designs"]
+            },
+            "description": "Should return 401 - Access denied"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Access Admin Route as Customer",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Category\",\n  \"description\": \"This should fail\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories"]
+            },
+            "description": "Should return 403 - Forbidden"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Invalid JWT Token",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "invalid.jwt.token",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designs",
+              "host": ["{{base_url}}"],
+              "path": ["designs"]
+            },
+            "description": "Should return 401 - Invalid token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🧪 Validation Tests",
+      "item": [
+        {
+          "name": "❌ Registration Validation Errors",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"A\",\n  \"email\": \"not-an-email\",\n  \"password\": \"123\",\n  \"confirmPassword\": \"456\",\n  \"role\": \"invalid-role\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Test multiple validation errors in registration"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Login Validation Errors",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Test validation errors in login"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Design Query Validation Errors",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designs?page=0&limit=101&minPrice=invalid&maxPrice=not-a-number&complexityLevel=Invalid",
+              "host": ["{{base_url}}"],
+              "path": ["designs"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "101"
+                },
+                {
+                  "key": "minPrice",
+                  "value": "invalid"
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "not-a-number"
+                },
+                {
+                  "key": "complexityLevel",
+                  "value": "Invalid"
+                }
+              ]
+            },
+            "description": "Test query parameter validation errors"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🚫 Error Handling Tests",
+      "item": [
+        {
+          "name": "❌ Non-existent Route",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/non-existent-route",
+              "host": ["{{base_url}}"],
+              "path": ["non-existent-route"]
+            },
+            "description": "Should return 404 - Route not found"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Wrong HTTP Method",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories"]
+            },
+            "description": "Should return 404 - Method not allowed for this route"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Malformed JSON",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Category\",\n  \"description\": \"Valid description\"\n  // Missing comma and malformed JSON\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories"]
+            },
+            "description": "Test malformed JSON handling"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💰 Pricing Plans",
+      "item": [
+        {
+          "name": "Get Active Pricing Plans (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/pricing-plans/active",
+              "host": ["{{base_url}}"],
+              "path": ["pricing-plans", "active"]
+            },
+            "description": "Get all active pricing plans - public endpoint"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Pricing Plan (Admin Only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('pricing_plan_id', response.data._id);",
+                  "    pm.test('Pricing Plan created successfully', function () {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Premium Plan\",\n  \"description\": \"Full access to all premium features and designs\",\n  \"price\": 99.99,\n  \"features\": [\n    \"Unlimited downloads\",\n    \"Premium support\",\n    \"Advanced analytics\",\n    \"Custom design requests\",\n    \"Priority queue\"\n  ],\n  \"duration\": \"1 month\",\n  \"maxDesigns\": 100,\n  \"maxDownloads\": 1000,\n  \"priority\": 1,\n  \"isActive\": true,\n  \"discountPercentage\": 10,\n  \"validUntil\": \"2025-12-31T23:59:59.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/pricing-plans",
+              "host": ["{{base_url}}"],
+              "path": ["pricing-plans"]
+            },
+            "description": "Create a new pricing plan (requires admin authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Pricing Plans (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/pricing-plans?page=1&limit=10&sortBy=priority&sortOrder=desc",
+              "host": ["{{base_url}}"],
+              "path": ["pricing-plans"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "priority"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "Get all pricing plans with filtering and pagination (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single Pricing Plan",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/pricing-plans/{{pricing_plan_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["pricing-plans", "{{pricing_plan_id}}"]
+            },
+            "description": "Get a single pricing plan by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Pricing Plan (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Premium Plan Updated\",\n  \"price\": 89.99,\n  \"discountPercentage\": 15,\n  \"features\": [\n    \"Unlimited downloads\",\n    \"Premium support\",\n    \"Advanced analytics\",\n    \"Custom design requests\",\n    \"Priority queue\",\n    \"24/7 support\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/pricing-plans/{{pricing_plan_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["pricing-plans", "{{pricing_plan_id}}"]
+            },
+            "description": "Update an existing pricing plan"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pricing Plan Analytics (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/pricing-plans/analytics?startDate=2025-01-01&endDate=2025-12-31",
+              "host": ["{{base_url}}"],
+              "path": ["pricing-plans", "analytics"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2025-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-12-31"
+                }
+              ]
+            },
+            "description": "Get pricing plan analytics and statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Create Pricing Plan as Customer (Should Fail)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Unauthorized Plan\",\n  \"description\": \"This should fail\",\n  \"price\": 50,\n  \"features\": [\"Basic feature\"],\n  \"duration\": \"1 month\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/pricing-plans",
+              "host": ["{{base_url}}"],
+              "path": ["pricing-plans"]
+            },
+            "description": "Test authorization - customer trying to create pricing plan should fail"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Invalid Pricing Plan Data",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"A\",\n  \"description\": \"Too short\",\n  \"price\": -10,\n  \"features\": [],\n  \"duration\": \"\",\n  \"discountPercentage\": 150\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/pricing-plans",
+              "host": ["{{base_url}}"],
+              "path": ["pricing-plans"]
+            },
+            "description": "Test validation with invalid pricing plan data"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🛒 Purchases",
+      "item": [
+        {
+          "name": "Create Purchase (Customer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('purchase_id', response.data._id);",
+                  "    pm.test('Purchase created successfully', function () {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pricingPlan\": \"{{pricing_plan_id}}\",\n  \"paymentMethod\": \"credit_card\",\n  \"paymentDetails\": {\n    \"cardNumber\": \"**** **** **** 1234\",\n    \"expiryDate\": \"12/26\",\n    \"cvv\": \"***\",\n    \"cardholderName\": \"John Doe\"\n  },\n  \"billingAddress\": {\n    \"street\": \"123 Main Street\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zipCode\": \"10001\",\n    \"country\": \"USA\"\n  },\n  \"notes\": \"First purchase - excited to try premium features!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/purchases",
+              "host": ["{{base_url}}"],
+              "path": ["purchases"]
+            },
+            "description": "Create a new purchase (requires customer authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Purchases (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/purchases?page=1&limit=10&status=pending&sortBy=createdAt&sortOrder=desc",
+              "host": ["{{base_url}}"],
+              "path": ["purchases"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "pending"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "Get all purchases with filtering and pagination (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Purchases (Customer)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/purchases/my-purchases?page=1&limit=10&status=pending",
+              "host": ["{{base_url}}"],
+              "path": ["purchases", "my-purchases"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "pending"
+                }
+              ]
+            },
+            "description": "Get current user's purchases"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single Purchase",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/purchases/{{purchase_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["purchases", "{{purchase_id}}"]
+            },
+            "description": "Get a single purchase by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Purchase Status (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\",\n  \"adminNotes\": \"Purchase verified and approved. Payment confirmed.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/purchases/{{purchase_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["purchases", "{{purchase_id}}", "status"]
+            },
+            "description": "Update purchase status (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Purchase Analytics (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/purchases/analytics?startDate=2025-01-01&endDate=2025-12-31&groupBy=month",
+              "host": ["{{base_url}}"],
+              "path": ["purchases", "analytics"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2025-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-12-31"
+                },
+                {
+                  "key": "groupBy",
+                  "value": "month"
+                }
+              ]
+            },
+            "description": "Get purchase analytics and statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Purchase (Customer)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cancelReason\": \"Changed my mind about the purchase\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/purchases/{{purchase_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["purchases", "{{purchase_id}}"]
+            },
+            "description": "Cancel a purchase (customer or admin)"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Create Purchase Without Authentication",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pricingPlan\": \"{{pricing_plan_id}}\",\n  \"paymentMethod\": \"credit_card\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/purchases",
+              "host": ["{{base_url}}"],
+              "path": ["purchases"]
+            },
+            "description": "Test authentication requirement - should fail without token"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Invalid Purchase Data",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pricingPlan\": \"invalid-plan-id\",\n  \"paymentMethod\": \"invalid-method\",\n  \"paymentDetails\": {\n    \"cardNumber\": \"123\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/purchases",
+              "host": ["{{base_url}}"],
+              "path": ["purchases"]
+            },
+            "description": "Test validation with invalid purchase data"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "⭐ Reviews",
+      "item": [
+        {
+          "name": "Create Review (Customer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('review_id', response.data._id);",
+                  "    pm.test('Review created successfully', function () {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"design\": \"{{design_id}}\",\n  \"rating\": 5,\n  \"comment\": \"Absolutely fantastic design! The attention to detail is remarkable and the quality exceeds expectations. The modern aesthetic perfectly captures what I was looking for in a corporate logo. Highly recommended for any business looking for professional branding.\",\n  \"title\": \"Outstanding Modern Corporate Design\",\n  \"pros\": [\n    \"Clean and professional design\",\n    \"High-quality files provided\",\n    \"Excellent documentation\",\n    \"Easy to customize colors\",\n    \"Scalable vector format\"\n  ],\n  \"cons\": [\n    \"Could include more color variations\"\n  ],\n  \"wouldRecommend\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["reviews"]
+            },
+            "description": "Create a new review for a design (requires customer authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Reviews (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/reviews?page=1&limit=10&rating=5&sortBy=createdAt&sortOrder=desc",
+              "host": ["{{base_url}}"],
+              "path": ["reviews"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "rating",
+                  "value": "5"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "Get all reviews with filtering and pagination (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Design Reviews (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/reviews/design/{{design_id}}?page=1&limit=10&sortBy=helpfulCount&sortOrder=desc",
+              "host": ["{{base_url}}"],
+              "path": ["reviews", "design", "{{design_id}}"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "helpfulCount"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "Get all reviews for a specific design - public endpoint"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single Review",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/reviews/{{review_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["reviews", "{{review_id}}"]
+            },
+            "description": "Get a single review by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Review (Owner)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4,\n  \"comment\": \"Updated review: Still a great design with minor improvements needed. Overall very satisfied with the purchase and would buy again.\",\n  \"title\": \"Great Design with Minor Improvements Needed\",\n  \"pros\": [\n    \"Clean and professional design\",\n    \"High-quality files provided\",\n    \"Excellent documentation\",\n    \"Easy to customize colors\",\n    \"Scalable vector format\",\n    \"Responsive customer support\"\n  ],\n  \"cons\": [\n    \"Could include more color variations\",\n    \"Limited font options in package\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/reviews/{{review_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["reviews", "{{review_id}}"]
+            },
+            "description": "Update an existing review (owner or admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Review as Helpful (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isHelpful\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/reviews/{{review_id}}/helpful",
+              "host": ["{{base_url}}"],
+              "path": ["reviews", "{{review_id}}", "helpful"]
+            },
+            "description": "Mark a review as helpful or not helpful"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Review Analytics (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/reviews/analytics?startDate=2025-01-01&endDate=2025-12-31&designId={{design_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["reviews", "analytics"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2025-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-12-31"
+                },
+                {
+                  "key": "designId",
+                  "value": "{{design_id}}"
+                }
+              ]
+            },
+            "description": "Get review analytics and statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Review (Owner/Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/reviews/{{review_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["reviews", "{{review_id}}"]
+            },
+            "description": "Delete a review (owner or admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Create Duplicate Review (Should Fail)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"design\": \"{{design_id}}\",\n  \"rating\": 3,\n  \"comment\": \"This should fail as user already reviewed this design\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["reviews"]
+            },
+            "description": "Test duplicate review prevention - should fail if user already reviewed this design"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Mark Own Review as Helpful (Should Fail)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isHelpful\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/reviews/{{review_id}}/helpful",
+              "host": ["{{base_url}}"],
+              "path": ["reviews", "{{review_id}}", "helpful"]
+            },
+            "description": "Test self-helpfulness prevention - should fail when user tries to mark own review as helpful"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Invalid Review Data",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"design\": \"invalid-design-id\",\n  \"rating\": 6,\n  \"comment\": \"Short\",\n  \"title\": \"A\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["reviews"]
+            },
+            "description": "Test validation with invalid review data"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🧹 Cleanup",
+      "item": [
+        {
+          "name": "Delete Test Category",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/categories/{{category_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["categories", "{{category_id}}"]
+            },
+            "description": "Clean up test category"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Pre-request script to set up environment variables if needed",
+          "if (!pm.environment.get('base_url')) {",
+          "    pm.environment.set('base_url', 'http://localhost:5000/api');",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "pm.test('Response time is reasonable', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "if (pm.response.code !== 404 && pm.response.code !== 500) {",
+          "    pm.test('Response has proper content type', function () {",
+          "        pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ]
+}
