@@ -11,6 +11,13 @@ export const createPricingPlanSchema = z.object({
       .max(50, "Plan name cannot exceed 50 characters")
       .trim(),
 
+    description: z
+      .string()
+      .min(1, "Description cannot be empty")
+      .max(500, "Description cannot exceed 500 characters")
+      .trim()
+      .optional(),
+
     price: z
       .number({
         required_error: "Price is required",
@@ -31,7 +38,36 @@ export const createPricingPlanSchema = z.object({
       .max(50, "Duration cannot exceed 50 characters")
       .trim(),
 
+    maxDesigns: z
+      .number()
+      .min(1, "Max designs must be at least 1")
+      .max(99999, "Max designs cannot exceed 99,999")
+      .optional(),
+
+    maxDownloads: z
+      .number()
+      .min(1, "Max downloads must be at least 1")
+      .max(999999, "Max downloads cannot exceed 999,999")
+      .optional(),
+
+    priority: z
+      .number()
+      .min(1, "Priority must be at least 1")
+      .max(100, "Priority cannot exceed 100")
+      .default(1),
+
     isActive: z.boolean().default(true),
+
+    discountPercentage: z
+      .number()
+      .min(0, "Discount percentage cannot be negative")
+      .max(100, "Discount percentage cannot exceed 100")
+      .default(0),
+
+    validUntil: z
+      .string()
+      .datetime("Invalid valid until date format")
+      .optional(),
   }),
 });
 
@@ -42,6 +78,13 @@ export const updatePricingPlanSchema = z.object({
       .string()
       .min(3, "Plan name must be at least 3 characters long")
       .max(50, "Plan name cannot exceed 50 characters")
+      .trim()
+      .optional(),
+
+    description: z
+      .string()
+      .min(1, "Description cannot be empty")
+      .max(500, "Description cannot exceed 500 characters")
       .trim()
       .optional(),
 
@@ -64,7 +107,36 @@ export const updatePricingPlanSchema = z.object({
       .trim()
       .optional(),
 
+    maxDesigns: z
+      .number()
+      .min(1, "Max designs must be at least 1")
+      .max(99999, "Max designs cannot exceed 99,999")
+      .optional(),
+
+    maxDownloads: z
+      .number()
+      .min(1, "Max downloads must be at least 1")
+      .max(999999, "Max downloads cannot exceed 999,999")
+      .optional(),
+
+    priority: z
+      .number()
+      .min(1, "Priority must be at least 1")
+      .max(100, "Priority cannot exceed 100")
+      .optional(),
+
     isActive: z.boolean().optional(),
+
+    discountPercentage: z
+      .number()
+      .min(0, "Discount percentage cannot be negative")
+      .max(100, "Discount percentage cannot exceed 100")
+      .optional(),
+
+    validUntil: z
+      .string()
+      .datetime("Invalid valid until date format")
+      .optional(),
   }),
 });
 

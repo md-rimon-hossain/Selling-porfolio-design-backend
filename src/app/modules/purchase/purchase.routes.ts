@@ -21,11 +21,23 @@ import {
   updatePurchaseStatus,
   cancelPurchase,
   getPurchaseAnalytics,
+  checkSubscriptionEligibility,
 } from "./purchase.controller";
 
 const router = Router();
 
 // Specific routes first (before parameterized routes)
+/**
+ * @route   GET /api/v1/purchases/subscription-eligibility
+ * @desc    Check if user can purchase a subscription
+ * @access  Private (Authenticated users)
+ */
+router.get(
+  "/subscription-eligibility",
+  authenticate,
+  checkSubscriptionEligibility,
+);
+
 /**
  * @route   GET /api/v1/purchases/my-purchases
  * @desc    Get current user's purchases
