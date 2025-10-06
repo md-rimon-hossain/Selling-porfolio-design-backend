@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { AnyZodObject, ZodError } from "zod";
+import { AnyZodObject, ZodError, ZodSchema } from "zod";
 
 interface ValidationError {
   field: string;
@@ -45,7 +45,7 @@ const validate = (schema: AnyZodObject) => {
 };
 
 // Specific validation middleware for different request parts
-export const validateBody = (schema: AnyZodObject) => {
+export const validateBody = (schema: AnyZodObject | ZodSchema) => {
   return async (
     req: Request,
     res: Response,

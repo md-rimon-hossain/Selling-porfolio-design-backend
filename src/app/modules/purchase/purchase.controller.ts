@@ -2,6 +2,7 @@ import { Response } from "express";
 import { Types } from "mongoose";
 import { Purchase } from "./purchase.model";
 import { PricingPlan } from "../pricingPlan/pricingPlan.model";
+import { Design } from "../design/design.model";
 import { AuthRequest } from "../../middlewares/auth";
 
 // Create a new purchase
@@ -11,6 +12,8 @@ export const createPurchase = async (
 ): Promise<void> => {
   try {
     const {
+      purchaseType,
+      design,
       pricingPlan,
       paymentMethod,
       paymentDetails,
@@ -19,26 +22,71 @@ export const createPurchase = async (
       notes,
     } = req.body;
 
-    // Verify pricing plan exists and is active
-    const plan = await PricingPlan.findById(pricingPlan);
-    if (!plan || !plan.isActive) {
-      res.status(404).json({
-        success: false,
-        message: "Pricing plan not found or inactive",
-      });
-      return;
-    }
+    let amount = 0;
+    let subscriptionStartDate: Date | undefined;
+    let subscriptionEndDate: Date | undefined;
+    let remainingDownloads: number | undefined;
 
-    // Check if plan is still valid (if has validUntil date)
-    if (plan.validUntil && new Date() > plan.validUntil) {
+    if (purchaseType === "individual") {
+      // Individual design purchase
+      const designDoc = await Design.findById(design);
+      if (!designDoc || designDoc.status !== "Active") {
+        res.status(404).json({
+          success: false,
+          message: "Design not found or not available",
+        });
+        return;
+      }
+      amount = designDoc.price;
+    } else if (purchaseType === "subscription") {
+      // Subscription purchase
+      const plan = await PricingPlan.findById(pricingPlan);
+      if (!plan || !plan.isActive) {
+        res.status(404).json({
+          success: false,
+          message: "Pricing plan not found or inactive",
+        });
+        return;
+      }
+
+      // Check if plan is still valid (if has validUntil date)
+      if (plan.validUntil && new Date() > plan.validUntil) {
+        res.status(400).json({
+          success: false,
+          message: "Pricing plan has expired",
+        });
+        return;
+      }
+
+      amount = plan.finalPrice || plan.price;
+
+      // Set subscription dates
+      subscriptionStartDate = new Date();
+      const duration = plan.duration.toLowerCase();
+      subscriptionEndDate = new Date(subscriptionStartDate);
+
+      if (duration.includes("month")) {
+        const months = parseInt(duration.match(/\d+/)?.[0] || "1");
+        subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + months);
+      } else if (duration.includes("year")) {
+        const years = parseInt(duration.match(/\d+/)?.[0] || "1");
+        subscriptionEndDate.setFullYear(
+          subscriptionEndDate.getFullYear() + years,
+        );
+      } else {
+        // Default to 1 month if duration format is unclear
+        subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
+      }
+
+      remainingDownloads = plan.maxDownloads || 999999; // Unlimited if not specified
+    } else {
       res.status(400).json({
         success: false,
-        message: "Pricing plan has expired",
+        message:
+          "Invalid purchase type. Must be 'individual' or 'subscription'",
       });
       return;
     }
-
-    // Check for existing active purchase for the same user and plan
 
     if (!req.user?._id) {
       res.status(401).json({
@@ -48,31 +96,105 @@ export const createPurchase = async (
       return;
     }
 
-    const existingPurchase = await Purchase.findOne({
-      user: req.user._id,
-      pricingPlan,
-      status: { $in: ["active", "pending"] },
-    });
-
-    if (existingPurchase) {
-      res.status(409).json({
-        success: false,
-        message: "You already have an active or pending purchase for this plan",
+    // Check for existing purchases based on type
+    if (purchaseType === "individual") {
+      // Check if user already purchased this design
+      const existingDesignPurchase = await Purchase.findOne({
+        user: req.user._id,
+        design,
+        purchaseType: "individual",
+        status: { $in: ["active", "pending"] },
       });
-      return;
+
+      if (existingDesignPurchase) {
+        res.status(409).json({
+          success: false,
+          message: "You have already purchased this design",
+        });
+        return;
+      }
+    } else if (purchaseType === "subscription") {
+      // Check if user has an active subscription
+      const activeSubscription = await Purchase.findOne({
+        user: req.user._id,
+        purchaseType: "subscription",
+        status: "active",
+        subscriptionEndDate: { $gt: new Date() },
+      }).populate("pricingPlan", "name duration");
+
+      if (activeSubscription) {
+        const daysRemaining = Math.ceil(
+          (activeSubscription.subscriptionEndDate!.getTime() -
+            new Date().getTime()) /
+            (1000 * 60 * 60 * 24),
+        );
+
+        res.status(409).json({
+          success: false,
+          message: "You already have an active subscription",
+          error: "DUPLICATE_SUBSCRIPTION",
+          data: {
+            currentSubscription: {
+              id: activeSubscription._id,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              planName:
+                (activeSubscription.pricingPlan as any)?.name || "Unknown Plan",
+              remainingDays: daysRemaining,
+              expiryDate: activeSubscription.subscriptionEndDate,
+              remainingDownloads: activeSubscription.remainingDownloads || 0,
+            },
+            suggestions: [
+              "Wait for current subscription to expire",
+              "Upgrade your current plan (if available)",
+              "Contact support for plan changes",
+            ],
+          },
+        });
+        return;
+      }
+
+      // Check for pending subscription
+      const pendingSubscription = await Purchase.findOne({
+        user: req.user._id,
+        purchaseType: "subscription",
+        status: "pending",
+      }).populate("pricingPlan", "name price");
+
+      if (pendingSubscription) {
+        res.status(409).json({
+          success: false,
+          message: "You have a pending subscription payment",
+          error: "PENDING_SUBSCRIPTION",
+          data: {
+            pendingPurchase: {
+              id: pendingSubscription._id,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              planName:
+                (pendingSubscription.pricingPlan as any)?.name ||
+                "Unknown Plan",
+              amount: pendingSubscription.amount,
+              createdAt: pendingSubscription.createdAt,
+            },
+            action: "Complete the pending payment or cancel it first",
+          },
+        });
+        return;
+      }
     }
 
-    // Calculate amount based on plan's final price
-    const amount = plan.finalPrice || plan.price;
-
     const newPurchase = new Purchase({
-      user: req.user?._id,
-      pricingPlan,
+      user: req.user._id,
+      purchaseType,
+      design: purchaseType === "individual" ? design : undefined,
+      pricingPlan: purchaseType === "subscription" ? pricingPlan : undefined,
       amount,
       currency: currency || "USD",
       paymentMethod,
       paymentDetails,
       billingAddress,
+      subscriptionStartDate,
+      subscriptionEndDate,
+      remainingDownloads,
       notes,
       status: paymentMethod === "free" ? "active" : "pending",
       purchaseDate: new Date(),
@@ -80,9 +202,20 @@ export const createPurchase = async (
 
     const savedPurchase = await newPurchase.save();
 
-    // Populate the purchase with plan and user details
+    // Populate the purchase with relevant details
+    let populateField = "";
+    let selectFields = "";
+
+    if (purchaseType === "individual") {
+      populateField = "design";
+      selectFields = "title price images";
+    } else {
+      populateField = "pricingPlan";
+      selectFields = "name description features duration maxDownloads";
+    }
+
     const populatedPurchase = await Purchase.findById(savedPurchase._id)
-      .populate("pricingPlan", "name description features duration")
+      .populate(populateField, selectFields)
       .populate("user", "name email")
       .select("-__v");
 
@@ -377,6 +510,34 @@ export const updatePurchaseStatus = async (
     // Set activation date if status is being changed to active
     if (status === "active" && purchase.status !== "active") {
       updateData.activatedAt = new Date();
+
+      // For subscription purchases, set subscription dates and download limits
+      if (purchase.purchaseType === "subscription" && purchase.pricingPlan) {
+        const plan = await PricingPlan.findById(purchase.pricingPlan);
+        if (plan) {
+          const subscriptionStartDate = new Date();
+          const subscriptionEndDate = new Date(subscriptionStartDate);
+
+          const duration = plan.duration.toLowerCase();
+          if (duration.includes("month")) {
+            const months = parseInt(duration.match(/\\d+/)?.[0] || "1");
+            subscriptionEndDate.setMonth(
+              subscriptionEndDate.getMonth() + months,
+            );
+          } else if (duration.includes("year")) {
+            const years = parseInt(duration.match(/\\d+/)?.[0] || "1");
+            subscriptionEndDate.setFullYear(
+              subscriptionEndDate.getFullYear() + years,
+            );
+          } else {
+            subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
+          }
+
+          updateData.subscriptionStartDate = subscriptionStartDate;
+          updateData.subscriptionEndDate = subscriptionEndDate;
+          updateData.remainingDownloads = plan.maxDownloads || 999999;
+        }
+      }
     }
 
     // Set expiry date if status is being changed to expired
@@ -474,6 +635,88 @@ export const cancelPurchase = async (
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error("Error cancelling purchase:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
+// Check subscription eligibility (prevent duplicate subscriptions)
+export const checkSubscriptionEligibility = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const userId = req.user?._id;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: "User not authenticated",
+      });
+      return;
+    }
+
+    // Check for active subscription
+    const activeSubscription = await Purchase.findOne({
+      user: userId,
+      purchaseType: "subscription",
+      status: "active",
+      subscriptionEndDate: { $gt: new Date() },
+    }).populate("pricingPlan", "name duration price maxDownloads");
+
+    // Check for pending subscription
+    const pendingSubscription = await Purchase.findOne({
+      user: userId,
+      purchaseType: "subscription",
+      status: "pending",
+    }).populate("pricingPlan", "name price");
+
+    const canPurchaseSubscription = !activeSubscription && !pendingSubscription;
+
+    res.status(200).json({
+      success: true,
+      message: "Subscription eligibility checked",
+      data: {
+        canPurchaseSubscription,
+        hasActiveSubscription: !!activeSubscription,
+        hasPendingSubscription: !!pendingSubscription,
+        activeSubscription: activeSubscription
+          ? {
+              id: activeSubscription._id,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              planName:
+                (activeSubscription.pricingPlan as any)?.name || "Unknown Plan",
+              expiryDate: activeSubscription.subscriptionEndDate,
+              remainingDownloads: activeSubscription.remainingDownloads || 0,
+              daysRemaining: Math.ceil(
+                (activeSubscription.subscriptionEndDate!.getTime() -
+                  new Date().getTime()) /
+                  (1000 * 60 * 60 * 24),
+              ),
+            }
+          : null,
+        pendingSubscription: pendingSubscription
+          ? {
+              id: pendingSubscription._id,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              planName:
+                (pendingSubscription.pricingPlan as any)?.name ||
+                "Unknown Plan",
+              amount: pendingSubscription.amount,
+              createdAt: pendingSubscription.createdAt,
+            }
+          : null,
+        message: canPurchaseSubscription
+          ? "You can purchase a subscription"
+          : "You already have a subscription (active or pending)",
+      },
+    });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Error checking subscription eligibility:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error",

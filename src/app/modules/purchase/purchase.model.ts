@@ -4,7 +4,11 @@ import { Schema, model, Types } from "mongoose";
 export interface IPurchase {
   _id?: string;
   user: Types.ObjectId;
-  pricingPlan: Types.ObjectId;
+  purchaseType: "individual" | "subscription";
+  // For individual purchases
+  design?: Types.ObjectId;
+  // For subscription purchases
+  pricingPlan?: Types.ObjectId;
   amount: number;
   currency: string;
   paymentMethod: "credit_card" | "paypal" | "stripe" | "bank_transfer" | "free";
@@ -21,6 +25,10 @@ export interface IPurchase {
   activatedAt?: Date;
   expiredAt?: Date;
   cancelledAt?: Date;
+  // Subscription specific fields
+  subscriptionStartDate?: Date;
+  subscriptionEndDate?: Date;
+  remainingDownloads?: number;
   notes?: string;
   adminNotes?: string;
   cancelReason?: string;
@@ -36,10 +44,24 @@ const purchaseSchema = new Schema<IPurchase>(
       ref: "User",
       required: [true, "User is required"],
     },
+    purchaseType: {
+      type: String,
+      required: [true, "Purchase type is required"],
+      enum: ["individual", "subscription"],
+    },
+    design: {
+      type: Schema.Types.ObjectId,
+      ref: "Design",
+      required: function () {
+        return this.purchaseType === "individual";
+      },
+    },
     pricingPlan: {
       type: Schema.Types.ObjectId,
       ref: "PricingPlan",
-      required: [true, "Pricing plan is required"],
+      required: function () {
+        return this.purchaseType === "subscription";
+      },
     },
     amount: {
       type: Number,
@@ -100,6 +122,25 @@ const purchaseSchema = new Schema<IPurchase>(
     },
     cancelledAt: {
       type: Date,
+    },
+    subscriptionStartDate: {
+      type: Date,
+      required: function () {
+        return this.purchaseType === "subscription" && this.status === "active";
+      },
+    },
+    subscriptionEndDate: {
+      type: Date,
+      required: function () {
+        return this.purchaseType === "subscription" && this.status === "active";
+      },
+    },
+    remainingDownloads: {
+      type: Number,
+      min: [0, "Remaining downloads cannot be negative"],
+      required: function () {
+        return this.purchaseType === "subscription" && this.status === "active";
+      },
     },
     notes: {
       type: String,

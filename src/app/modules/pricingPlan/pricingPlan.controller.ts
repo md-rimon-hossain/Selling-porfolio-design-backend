@@ -1,10 +1,13 @@
-import { Request, Response} from "express"
+import { Request, Response } from "express";
 import { Types } from "mongoose";
 import { IPricingPlan, PricingPlan } from "./pricingPlan.model";
 import { Purchase } from "../purchase/purchase.model";
 
 // Create a new pricing plan (Admin only)
-export const createPricingPlan = async (req: Request, res: Response): Promise<void> => {
+export const createPricingPlan = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const {
       name,
@@ -21,9 +24,9 @@ export const createPricingPlan = async (req: Request, res: Response): Promise<vo
     } = req.body;
 
     // Check if pricing plan with same name already exists and is active
-    const existingPlan = await PricingPlan.findOne({ 
+    const existingPlan = await PricingPlan.findOne({
       name: name.toLowerCase(),
-      isActive: true 
+      isActive: true,
     });
 
     if (existingPlan) {
@@ -31,6 +34,7 @@ export const createPricingPlan = async (req: Request, res: Response): Promise<vo
         success: false,
         message: "Pricing plan with this name already exists",
       });
+      return;
     }
 
     // Calculate discounted price if discount is provided
@@ -48,10 +52,11 @@ export const createPricingPlan = async (req: Request, res: Response): Promise<vo
       features,
       maxDesigns,
       maxDownloads,
-      priority: priority || 1,
+      priority: priority !== undefined ? priority : 1,
       isActive: isActive !== undefined ? isActive : true,
-      discountPercentage: discountPercentage || 0,
-      validUntil,
+      discountPercentage:
+        discountPercentage !== undefined ? discountPercentage : 0,
+      validUntil: validUntil ? new Date(validUntil) : undefined,
     });
 
     const savedPlan = await newPricingPlan.save();
@@ -73,7 +78,10 @@ export const createPricingPlan = async (req: Request, res: Response): Promise<vo
 };
 
 // Get all pricing plans
-export const getAllPricingPlans = async (req: Request, res: Response): Promise<void> => {
+export const getAllPricingPlans = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const {
       page = 1,
@@ -93,17 +101,23 @@ export const getAllPricingPlans = async (req: Request, res: Response): Promise<v
     // Build filter object
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const filter: Record<string, any> = {};
-    
+
     if (isActive !== undefined) {
       filter.isActive = isActive === "true";
     }
 
     if (minPrice) {
-      filter.finalPrice = { ...filter.finalPrice, $gte: parseFloat(minPrice as string) };
+      filter.finalPrice = {
+        ...filter.finalPrice,
+        $gte: parseFloat(minPrice as string),
+      };
     }
 
     if (maxPrice) {
-      filter.finalPrice = { ...filter.finalPrice, $lte: parseFloat(maxPrice as string) };
+      filter.finalPrice = {
+        ...filter.finalPrice,
+        $lte: parseFloat(maxPrice as string),
+      };
     }
 
     if (search) {
@@ -152,14 +166,14 @@ export const getAllPricingPlans = async (req: Request, res: Response): Promise<v
 };
 
 // Get active pricing plans only (for public view)
-export const getActivePricingPlans = async (req: Request, res: Response): Promise<void> => {
+export const getActivePricingPlans = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
-    const pricingPlans = await PricingPlan.find({ 
+    const pricingPlans = await PricingPlan.find({
       isActive: true,
-      $or: [
-        { validUntil: { $gte: new Date() } },
-        { validUntil: null }
-      ]
+      $or: [{ validUntil: { $gte: new Date() } }, { validUntil: null }],
     })
       .sort({ priority: 1, finalPrice: 1 })
       .select("-__v");
@@ -181,7 +195,10 @@ export const getActivePricingPlans = async (req: Request, res: Response): Promis
 };
 
 // Get single pricing plan by ID
-export const getPricingPlanById = async (req: Request, res: Response): Promise<void> => {
+export const getPricingPlanById = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -218,7 +235,10 @@ export const getPricingPlanById = async (req: Request, res: Response): Promise<v
 };
 
 // Update pricing plan (Admin only)
-export const updatePricingPlan = async (req: Request, res: Response): Promise<void> => {
+export const updatePricingPlan = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const { id } = req.params;
     const updateData = req.body;
@@ -231,8 +251,8 @@ export const updatePricingPlan = async (req: Request, res: Response): Promise<vo
     }
 
     // Check if plan exists
-    const existingPlan : IPricingPlan | null = await PricingPlan.findById(id);
-    
+    const existingPlan: IPricingPlan | null = await PricingPlan.findById(id);
+
     if (!existingPlan) {
       res.status(404).json({
         success: false,
@@ -241,7 +261,10 @@ export const updatePricingPlan = async (req: Request, res: Response): Promise<vo
     }
 
     // If name is being updated, check for duplicates
-    if (updateData.name && updateData.name.toLowerCase() !== existingPlan?.name) {
+    if (
+      updateData.name &&
+      updateData.name.toLowerCase() !== existingPlan?.name
+    ) {
       const duplicatePlan = await PricingPlan.findOne({
         name: updateData.name.toLowerCase(),
         isActive: true,
@@ -259,11 +282,13 @@ export const updatePricingPlan = async (req: Request, res: Response): Promise<vo
     // Calculate new final price if price or discount is updated
     if (updateData.price || updateData.discountPercentage !== undefined) {
       const price = updateData.price || existingPlan?.price;
-      const discount = updateData.discountPercentage !== undefined 
-        ? updateData.discountPercentage 
-        : existingPlan?.discountPercentage;
-      
-      updateData.finalPrice = discount > 0 ? price - (price * discount) / 100 : price;
+      const discount =
+        updateData.discountPercentage !== undefined
+          ? updateData.discountPercentage
+          : existingPlan?.discountPercentage;
+
+      updateData.finalPrice =
+        discount > 0 ? price - (price * discount) / 100 : price;
     }
 
     // Convert name to lowercase if provided
@@ -274,7 +299,7 @@ export const updatePricingPlan = async (req: Request, res: Response): Promise<vo
     const updatedPlan = await PricingPlan.findByIdAndUpdate(
       id,
       { ...updateData, updatedAt: new Date() },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     ).select("-__v");
 
     res.status(200).json({
@@ -294,7 +319,10 @@ export const updatePricingPlan = async (req: Request, res: Response): Promise<vo
 };
 
 // Delete pricing plan (Admin only)
-export const deletePricingPlan = async (req: Request, res: Response): Promise<void> => {
+export const deletePricingPlan = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const { id } = req.params;
     const { permanent } = req.query;
@@ -325,14 +353,15 @@ export const deletePricingPlan = async (req: Request, res: Response): Promise<vo
     if (activePurchases > 0 && permanent === "true") {
       res.status(400).json({
         success: false,
-        message: "Cannot permanently delete pricing plan with active purchases. Deactivate instead.",
+        message:
+          "Cannot permanently delete pricing plan with active purchases. Deactivate instead.",
       });
     }
 
     if (permanent === "true") {
       // Permanent deletion
       await PricingPlan.findByIdAndDelete(id);
-      
+
       res.status(200).json({
         success: true,
         message: "Pricing plan permanently deleted successfully",
@@ -342,7 +371,7 @@ export const deletePricingPlan = async (req: Request, res: Response): Promise<vo
       const deactivatedPlan = await PricingPlan.findByIdAndUpdate(
         id,
         { isActive: false, updatedAt: new Date() },
-        { new: true }
+        { new: true },
       );
 
       res.status(200).json({
@@ -363,7 +392,10 @@ export const deletePricingPlan = async (req: Request, res: Response): Promise<vo
 };
 
 // Get pricing plan analytics (Admin only)
-export const getPricingPlanAnalytics = async (req: Request, res: Response): Promise<void> => {
+export const getPricingPlanAnalytics = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const { period = "monthly", startDate, endDate } = req.query;
 
@@ -382,16 +414,24 @@ export const getPricingPlanAnalytics = async (req: Request, res: Response): Prom
       // Default period-based filtering
       switch (period) {
         case "daily":
-          dateFilter.createdAt = { $gte: new Date(now.setDate(now.getDate() - 1)) };
+          dateFilter.createdAt = {
+            $gte: new Date(now.setDate(now.getDate() - 1)),
+          };
           break;
         case "weekly":
-          dateFilter.createdAt = { $gte: new Date(now.setDate(now.getDate() - 7)) };
+          dateFilter.createdAt = {
+            $gte: new Date(now.setDate(now.getDate() - 7)),
+          };
           break;
         case "monthly":
-          dateFilter.createdAt = { $gte: new Date(now.setMonth(now.getMonth() - 1)) };
+          dateFilter.createdAt = {
+            $gte: new Date(now.setMonth(now.getMonth() - 1)),
+          };
           break;
         case "yearly":
-          dateFilter.createdAt = { $gte: new Date(now.setFullYear(now.getFullYear() - 1)) };
+          dateFilter.createdAt = {
+            $gte: new Date(now.setFullYear(now.getFullYear() - 1)),
+          };
           break;
       }
     }
