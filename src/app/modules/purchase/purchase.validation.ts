@@ -1,48 +1,87 @@
 import { z } from "zod";
 
 // Purchase creation validation schema
-export const createPurchaseSchema = z.object({
-  body: z.object({
-    pricingPlan: z
-      .string({
-        required_error: "Pricing plan ID is required",
-      })
-      .regex(/^[0-9a-fA-F]{24}$/, "Invalid pricing plan ID format"),
-
-    paymentMethod: z
-      .enum(["credit_card", "paypal", "stripe", "bank_transfer", "free"], {
-        required_error: "Payment method is required",
+export const createPurchaseSchema = z
+  .object({
+    body: z.object({
+      purchaseType: z.enum(["individual", "subscription"], {
+        required_error: "Purchase type is required",
         invalid_type_error:
-          "Payment method must be credit_card, paypal, stripe, bank_transfer, or free",
-      })
-      .optional(),
+          "Purchase type must be 'individual' or 'subscription'",
+      }),
 
-    paymentDetails: z
-      .object({
-        cardNumber: z.string().optional(),
-        expiryDate: z.string().optional(),
-        cvv: z.string().optional(),
-        cardholderName: z.string().optional(),
-        paypalEmail: z.string().email().optional(),
-        bankAccountNumber: z.string().optional(),
-      })
-      .optional(),
+      design: z
+        .string({
+          required_error: "Design ID is required for individual purchases",
+        })
+        .regex(/^[0-9a-fA-F]{24}$/, "Invalid design ID format")
+        .optional(),
 
-    currency: z.string().length(3, "Currency must be 3 characters").optional(),
+      pricingPlan: z
+        .string({
+          required_error:
+            "Pricing plan ID is required for subscription purchases",
+        })
+        .regex(/^[0-9a-fA-F]{24}$/, "Invalid pricing plan ID format")
+        .optional(),
 
-    billingAddress: z
-      .object({
-        street: z.string().min(1, "Street is required"),
-        city: z.string().min(1, "City is required"),
-        state: z.string().min(1, "State is required"),
-        zipCode: z.string().min(1, "Zip code is required"),
-        country: z.string().min(1, "Country is required"),
-      })
-      .optional(),
+      paymentMethod: z
+        .enum(["credit_card", "paypal", "stripe", "bank_transfer", "free"], {
+          required_error: "Payment method is required",
+          invalid_type_error:
+            "Payment method must be credit_card, paypal, stripe, bank_transfer, or free",
+        })
+        .optional(),
 
-    notes: z.string().max(500, "Notes cannot exceed 500 characters").optional(),
-  }),
-});
+      paymentDetails: z
+        .object({
+          cardNumber: z.string().optional(),
+          expiryDate: z.string().optional(),
+          cvv: z.string().optional(),
+          cardholderName: z.string().optional(),
+          paypalEmail: z.string().email().optional(),
+          bankAccountNumber: z.string().optional(),
+        })
+        .optional(),
+
+      currency: z
+        .string()
+        .length(3, "Currency must be 3 characters")
+        .optional(),
+
+      billingAddress: z
+        .object({
+          street: z.string().min(1, "Street is required"),
+          city: z.string().min(1, "City is required"),
+          state: z.string().min(1, "State is required"),
+          zipCode: z.string().min(1, "Zip code is required"),
+          country: z.string().min(1, "Country is required"),
+        })
+        .optional(),
+
+      notes: z
+        .string()
+        .max(500, "Notes cannot exceed 500 characters")
+        .optional(),
+    }),
+  })
+  .refine(
+    (data) => {
+      // For individual purchases, design is required
+      if (data.body.purchaseType === "individual" && !data.body.design) {
+        return false;
+      }
+      // For subscription purchases, pricingPlan is required
+      if (data.body.purchaseType === "subscription" && !data.body.pricingPlan) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message:
+        "Design ID is required for individual purchases, and Pricing Plan ID is required for subscription purchases",
+    },
+  );
 
 // Purchase update validation schema (for admin/payment status updates)
 export const updatePurchaseSchema = z.object({

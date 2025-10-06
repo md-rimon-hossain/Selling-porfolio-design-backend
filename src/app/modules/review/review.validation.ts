@@ -3,7 +3,7 @@ import { z } from "zod";
 // Review creation validation schema
 export const createReviewSchema = z.object({
   body: z.object({
-    design: z
+    designId: z
       .string({
         required_error: "Design ID is required",
       })
@@ -85,7 +85,7 @@ export const updateReviewSchema = z.object({
 // Review query parameters validation schema
 export const reviewQuerySchema = z.object({
   query: z.object({
-    design: z
+    designId: z
       .string()
       .regex(/^[0-9a-fA-F]{24}$/, "Invalid design ID format")
       .optional(),

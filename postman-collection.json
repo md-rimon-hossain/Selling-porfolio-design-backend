@@ -1378,7 +1378,7 @@
       "name": "🛒 Purchases",
       "item": [
         {
-          "name": "Create Purchase (Customer)",
+          "name": "Create Individual Design Purchase",
           "event": [
             {
               "listen": "test",
@@ -1387,8 +1387,8 @@
                 "exec": [
                   "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
-                  "    pm.environment.set('purchase_id', response.data._id);",
-                  "    pm.test('Purchase created successfully', function () {",
+                  "    pm.environment.set('individual_purchase_id', response.data._id);",
+                  "    pm.test('Individual purchase created successfully', function () {",
                   "        pm.expect(response.success).to.be.true;",
                   "    });",
                   "}"
@@ -1416,14 +1416,64 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"pricingPlan\": \"{{pricing_plan_id}}\",\n  \"paymentMethod\": \"credit_card\",\n  \"paymentDetails\": {\n    \"cardNumber\": \"**** **** **** 1234\",\n    \"expiryDate\": \"12/26\",\n    \"cvv\": \"***\",\n    \"cardholderName\": \"John Doe\"\n  },\n  \"billingAddress\": {\n    \"street\": \"123 Main Street\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zipCode\": \"10001\",\n    \"country\": \"USA\"\n  },\n  \"notes\": \"First purchase - excited to try premium features!\"\n}"
+              "raw": "{\n  \"purchaseType\": \"individual\",\n  \"design\": \"{{design_id}}\",\n  \"paymentMethod\": \"credit_card\",\n  \"paymentDetails\": {\n    \"cardNumber\": \"**** **** **** 1234\",\n    \"expiryDate\": \"12/26\",\n    \"cvv\": \"***\",\n    \"cardholderName\": \"John Doe\"\n  },\n  \"billingAddress\": {\n    \"street\": \"123 Main Street\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zipCode\": \"10001\",\n    \"country\": \"USA\"\n  },\n  \"notes\": \"Individual design purchase\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/purchases",
               "host": ["{{base_url}}"],
               "path": ["purchases"]
             },
-            "description": "Create a new purchase (requires customer authentication)"
+            "description": "Purchase a specific design individually"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Subscription Purchase",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('subscription_purchase_id', response.data._id);",
+                  "    pm.test('Subscription purchase created successfully', function () {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"purchaseType\": \"subscription\",\n  \"pricingPlan\": \"{{pricing_plan_id}}\",\n  \"paymentMethod\": \"credit_card\",\n  \"paymentDetails\": {\n    \"cardNumber\": \"**** **** **** 1234\",\n    \"expiryDate\": \"12/26\",\n    \"cvv\": \"***\",\n    \"cardholderName\": \"John Doe\"\n  },\n  \"billingAddress\": {\n    \"street\": \"123 Main Street\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zipCode\": \"10001\",\n    \"country\": \"USA\"\n  },\n  \"notes\": \"Premium subscription purchase\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/purchases",
+              "host": ["{{base_url}}"],
+              "path": ["purchases"]
+            },
+            "description": "Purchase a subscription plan"
           },
           "response": []
         },
@@ -1508,6 +1558,30 @@
               ]
             },
             "description": "Get current user's purchases"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Subscription Eligibility",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/purchases/subscription-eligibility",
+              "host": ["{{base_url}}"],
+              "path": ["purchases", "subscription-eligibility"]
+            },
+            "description": "Check if user can purchase a subscription (prevents duplicate subscriptions)"
           },
           "response": []
         },
@@ -2066,6 +2140,330 @@
               "path": ["reviews"]
             },
             "description": "Test validation with invalid review data"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📥 Downloads",
+      "item": [
+        {
+          "name": "Get Subscription Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/downloads/subscription-status",
+              "host": ["{{base_url}}"],
+              "path": ["downloads", "subscription-status"]
+            },
+            "description": "Get current user's subscription status and remaining downloads"
+          },
+          "response": []
+        },
+        {
+          "name": "Download Design (Individual Purchase)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/downloads/design/{{design_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["downloads", "design", "{{design_id}}"]
+            },
+            "description": "Download a design that was purchased individually"
+          },
+          "response": []
+        },
+        {
+          "name": "Download Design (Subscription)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/downloads/design/{{design_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["downloads", "design", "{{design_id}}"]
+            },
+            "description": "Download a design using active subscription (if available downloads remain)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Downloads",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/downloads/my-downloads?page=1&limit=10&sortBy=downloadDate&sortOrder=desc",
+              "host": ["{{base_url}}"],
+              "path": ["downloads", "my-downloads"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "downloadDate"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "Get user's download history"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Download Analytics (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/downloads/analytics?period=monthly&startDate=2025-01-01T00:00:00.000Z&endDate=2025-12-31T23:59:59.000Z",
+              "host": ["{{base_url}}"],
+              "path": ["downloads", "analytics"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "monthly"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2025-01-01T00:00:00.000Z"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-12-31T23:59:59.000Z"
+                }
+              ]
+            },
+            "description": "Get download analytics and statistics (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Download Without Permission",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/downloads/design/64f8a1b2c3d4e5f6789abcde",
+              "host": ["{{base_url}}"],
+              "path": ["downloads", "design", "64f8a1b2c3d4e5f6789abcde"]
+            },
+            "description": "Test download without purchase or active subscription - should fail"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Download with Expired Subscription",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/downloads/design/{{design_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["downloads", "design", "{{design_id}}"]
+            },
+            "description": "Test download with expired subscription - should fail"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔬 Hybrid System Tests",
+      "item": [
+        {
+          "name": "❌ Try Duplicate Individual Purchase",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"purchaseType\": \"individual\",\n  \"design\": \"{{design_id}}\",\n  \"paymentMethod\": \"credit_card\",\n  \"billingAddress\": {\n    \"street\": \"123 Main St\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zipCode\": \"10001\",\n    \"country\": \"USA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/purchases",
+              "host": ["{{base_url}}"],
+              "path": ["purchases"]
+            },
+            "description": "Try to purchase same design twice - should fail with 409"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Try Duplicate Subscription",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"purchaseType\": \"subscription\",\n  \"pricingPlan\": \"{{pricing_plan_id}}\",\n  \"paymentMethod\": \"credit_card\",\n  \"billingAddress\": {\n    \"street\": \"123 Main St\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zipCode\": \"10001\",\n    \"country\": \"USA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/purchases",
+              "host": ["{{base_url}}"],
+              "path": ["purchases"]
+            },
+            "description": "Try to create second subscription - should fail with DUPLICATE_SUBSCRIPTION error"
+          },
+          "response": []
+        },
+        {
+          "name": "✅ Check Subscription Eligibility (Should Fail)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/purchases/subscription-eligibility",
+              "host": ["{{base_url}}"],
+              "path": ["purchases", "subscription-eligibility"]
+            },
+            "description": "Check subscription eligibility when user already has subscription - should return canPurchaseSubscription: false"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Download with No Downloads Remaining",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/downloads/design/{{design_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["downloads", "design", "{{design_id}}"]
+            },
+            "description": "Try to download when subscription has no downloads remaining - should fail"
           },
           "response": []
         }
