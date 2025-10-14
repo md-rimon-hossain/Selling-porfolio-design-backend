@@ -14,6 +14,7 @@ export interface IDesign {
   complexityLevel: "Basic" | "Intermediate" | "Advanced";
   tags: string[];
   status: "Active" | "Draft" | "Archived";
+  isDeleted: boolean;
   likesCount: number;
   downloadCount: number;
   createdAt?: Date;

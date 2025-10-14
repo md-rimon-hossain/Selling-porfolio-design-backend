@@ -15,7 +15,7 @@ const createToken = (userId: string, email: string, role: string): string => {
   } as jwt.SignOptions);
 };
 
-const registerUser = async (req: Request, res: Response): Promise<void> => {
+const registerUserController= async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, password, role } = req.body;
     // eslint-disable-next-line no-console
@@ -51,7 +51,6 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
         token,
         user: {
           id: user._id,
-
           name: user.name,
           email: user.email,
           profileImage: user.profileImage,
@@ -70,7 +69,7 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-const login = async (req: Request, res: Response): Promise<void> => {
+const loginController = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
 
@@ -124,4 +123,4 @@ const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export { registerUser, login };
+export { registerUserController, loginController };
