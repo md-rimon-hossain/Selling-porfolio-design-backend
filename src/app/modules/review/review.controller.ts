@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 import { Review } from "./review.model";
 import { Design } from "../design/design.model";
 import { AuthRequest } from "../../middlewares/auth";
+import { Purchase } from "../purchase/purchase.model";
 
 // Create a new review
 export const createReview = async (
@@ -10,15 +11,35 @@ export const createReview = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const { designId, rating, comment, title, pros, cons } = req.body;
+    const { designId, rating, comment, title } = req.body;
 
     // Check if design exists
-    const designExists = await Design.findById(designId);
+    const designExists = await Design.findById({
+      _id: designId,
+      isDeleted: false,
+    });
+
     if (!designExists) {
       res.status(404).json({
         success: false,
-        message: "Design not found",
+        message: "Design not found or has been deleted!",
       });
+    }
+
+
+    const eligibleToReview = await Purchase.findOne({
+      design: designId,
+      user: req.user?._id,
+      status: "completed",
+    });
+
+    
+    if (!eligibleToReview) {  
+      res.status(403).json({
+        success: false,
+        message: "You can only review designs you have purchased!",
+      });
+      return;
     }
 
     // Check if user has already reviewed this design
@@ -40,8 +61,6 @@ export const createReview = async (
       rating,
       comment,
       title,
-      pros: pros || [],
-      cons: cons || [],
       isHelpful: false,
     });
 
@@ -50,8 +69,7 @@ export const createReview = async (
     // Populate the review with design and reviewer details
     const populatedReview = await Review.findById(savedReview._id)
       .populate("design", "title description")
-      .populate("reviewer", "name email")
-      .select("-__v");
+      .populate("reviewer", "name email");
 
     // Update design average rating
     await updateDesignRating(designId);
@@ -143,8 +161,7 @@ export const getAllReviews = async (
       .populate("reviewer", "name email")
       .sort(sort)
       .skip(skip)
-      .limit(limitNum)
-      .select("-__v");
+      .limit(limitNum);
 
     const totalReviews = await Review.countDocuments(filter);
     const totalPages = Math.ceil(totalReviews / limitNum);
@@ -174,7 +191,7 @@ export const getAllReviews = async (
 };
 
 // Get reviews for a specific design
-export const getDesignReviews = async (
+export const getSingleDesignReviews = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
@@ -383,7 +400,7 @@ export const getReviewById = async (
   }
 };
 
-// Update review (Only by review author)
+// Update review (Only by review author or admin)
 export const updateReview = async (
   req: AuthRequest,
   res: Response,
@@ -411,7 +428,7 @@ export const updateReview = async (
     // Check if user is authorized to update this review
     if (
       req.user?.role !== "admin" &&
-      review.reviewer?.toString() !== req.user?._id
+      review.reviewer?.toString() !== req.user?._id?.toString()
     ) {
       res.status(403).json({
         success: false,
@@ -426,8 +443,7 @@ export const updateReview = async (
       { new: true, runValidators: true },
     )
       .populate("design", "title description")
-      .populate("reviewer", "name email")
-      .select("-__v");
+      .populate("reviewer", "name email");
 
     // Update design average rating if rating was changed
     if (updateData.rating) {
@@ -477,7 +493,7 @@ export const deleteReview = async (
     // Check if user is authorized to delete this review
     if (
       req.user?.role !== "admin" &&
-      review.reviewer?.toString() !== req.user?._id
+      review.reviewer?.toString() !== req.user?._id?.toString()
     ) {
       res.status(403).json({
         success: false,
@@ -521,9 +537,11 @@ export const markReviewHelpful = async (
         success: false,
         message: "Invalid review ID format",
       });
+      return;
     }
 
     const review = await Review.findById(id);
+
     if (!review) {
       res.status(404).json({
         success: false,
@@ -545,12 +563,9 @@ export const markReviewHelpful = async (
       id,
       {
         isHelpful,
-        updatedAt: new Date(),
       },
       { new: true },
-    )
-      .populate("reviewer", "name")
-      .select("-__v");
+    ).populate("reviewer", "name");
 
     res.status(200).json({
       success: true,
@@ -568,7 +583,7 @@ export const markReviewHelpful = async (
   }
 };
 
-// Get review analytics (Admin only)
+// Get review analytics (Admin only) - overall stats, rating distribution, top reviewed designs, active reviewers
 export const getReviewAnalytics = async (
   req: Request,
   res: Response,

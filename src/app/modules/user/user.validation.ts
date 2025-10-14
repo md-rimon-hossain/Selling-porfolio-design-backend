@@ -30,6 +30,9 @@ export const createUserSchema = z.object({
       })
       .default("customer"),
 
+    isActive: z.boolean().default(true),
+    isDeleted: z.boolean().default(false),
+
     profileImage: z
       .string()
       .url("Profile image must be a valid URL")

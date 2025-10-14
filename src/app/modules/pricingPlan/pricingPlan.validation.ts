@@ -208,9 +208,15 @@ export const pricingPlanAnalyticsSchema = z.object({
   query: z.object({
     period: z.enum(["daily", "weekly", "monthly", "yearly"]).default("monthly"),
 
-    startDate: z.string().datetime("Invalid start date format").optional(),
+    startDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format, expected YYYY-MM-DD")
+      .optional(),
 
-    endDate: z.string().datetime("Invalid end date format").optional(),
+    endDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format, expected YYYY-MM-DD")
+      .optional(),
   }),
 });
 

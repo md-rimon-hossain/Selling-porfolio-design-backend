@@ -111,7 +111,11 @@ const updateCategory = async (req: Request, res: Response): Promise<void> => {
 // Delete category (Admin only)
 const deleteCategory = async (req: Request, res: Response): Promise<void> => {
   try {
-    const category = await Category.findByIdAndDelete(req.params.id);
+    const category = await Category.findByIdAndUpdate(
+      req.params.id,
+      { isDeleted: true },
+      { new: true },
+    );
 
     if (!category) {
       res.status(404).json({
@@ -124,6 +128,7 @@ const deleteCategory = async (req: Request, res: Response): Promise<void> => {
     res.status(200).json({
       success: true,
       message: "Category deleted successfully",
+      data: category,
     });
   } catch (error: unknown) {
     const errorMessage =

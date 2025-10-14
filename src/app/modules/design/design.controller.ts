@@ -4,7 +4,7 @@ import { Design } from "./design.model";
 const getAllDesigns = async (req: Request, res: Response): Promise<void> => {
   try {
     const designs = await Design.find({ status: "Active" })
-      .populate("category", "name description")
+      .populate("category", "name description isActive")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -62,7 +62,7 @@ const createNewDesign = async (req: Request, res: Response): Promise<void> => {
 
     const populatedDesign = await Design.findById(design._id).populate(
       "category",
-      "name description",
+      "name description isActive",
     );
 
     res.status(201).json({
@@ -87,7 +87,7 @@ const updateDesign = async (req: Request, res: Response): Promise<void> => {
     const design = await Design.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
-    }).populate("category", "name description");
+    }).populate("category", "name description isActive");
 
     if (!design) {
       res.status(404).json({
@@ -116,7 +116,10 @@ const updateDesign = async (req: Request, res: Response): Promise<void> => {
 // Delete design (Admin only)
 const deleteDesign = async (req: Request, res: Response): Promise<void> => {
   try {
-    const design = await Design.findByIdAndDelete(req.params.id);
+    const design = await Design.findByIdAndUpdate({
+     _id: req.params.id,
+     isDeleted:true,
+    });
 
     if (!design) {
       res.status(404).json({

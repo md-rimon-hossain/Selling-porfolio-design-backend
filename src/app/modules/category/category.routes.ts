@@ -3,12 +3,14 @@ import { authenticate, authorize } from "../../middlewares/auth";
 import {
   validateBody,
   validateParams,
-} from "../../middlewares/validateZodScheamas";
+} from "../../middlewares/validateZodSchemas";
+
 import {
   createCategorySchema,
   updateCategorySchema,
   categoryParamsSchema,
 } from "./category.validation";
+
 import {
   getAllCategories,
   getSingleCategory,

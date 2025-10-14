@@ -4,7 +4,8 @@ import {
   validateBody,
   validateParams,
   validateQuery,
-} from "../../middlewares/validateZodScheamas";
+} from "../../middlewares/validateZodSchemas";
+
 import {
   createReviewSchema,
   updateReviewSchema,
@@ -14,15 +15,16 @@ import {
   reviewHelpfulnessSchema,
   reviewAnalyticsSchema,
 } from "./review.validation";
+
 import {
   createReview,
   getAllReviews,
-  getDesignReviews,
   getReviewById,
   updateReview,
   deleteReview,
   markReviewHelpful,
   getReviewAnalytics,
+  getSingleDesignReviews,
 } from "./review.controller";
 
 const router = Router();
@@ -37,7 +39,7 @@ router.get(
   "/design/:designId",
   validateParams(designReviewsParamsSchema),
   validateQuery(reviewQuerySchema),
-  getDesignReviews,
+  getSingleDesignReviews,
 );
 
 /**

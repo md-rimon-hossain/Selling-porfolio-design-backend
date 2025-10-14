@@ -87,9 +87,9 @@ export const createPurchaseSchema = z
 export const updatePurchaseSchema = z.object({
   body: z.object({
     status: z
-      .enum(["pending", "active", "expired", "cancelled", "refunded"], {
+      .enum(["pending", "completed", "expired", "cancelled", "refunded"], {
         invalid_type_error:
-          "Status must be pending, active, expired, cancelled, or refunded",
+          "Status must be pending, completed, expired, cancelled, or refunded",
       })
       .optional(),
 
