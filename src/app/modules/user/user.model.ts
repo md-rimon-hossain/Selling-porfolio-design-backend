@@ -29,6 +29,14 @@ const userSchema = new Schema<IUser>(
       enum: ["admin", "customer"],
       default: "customer",
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
     profileImage: {
       type: String,
       default: null,

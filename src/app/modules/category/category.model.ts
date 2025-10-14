@@ -5,6 +5,7 @@ export interface ICategory {
   name: string;
   description?: string;
   isActive: boolean;
+  isDeleted: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -24,6 +25,11 @@ const categorySchema = new Schema<ICategory>(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      select: false,
     },
   },
   {

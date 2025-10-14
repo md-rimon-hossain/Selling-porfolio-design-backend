@@ -176,7 +176,6 @@ export const getActivePricingPlans = async (
       $or: [{ validUntil: { $gte: new Date() } }, { validUntil: null }],
     })
       .sort({ priority: 1, finalPrice: 1 })
-      .select("-__v");
 
     res.status(200).json({
       success: true,
@@ -209,7 +208,7 @@ export const getPricingPlanById = async (
       });
     }
 
-    const pricingPlan = await PricingPlan.findById(id).select("-__v");
+    const pricingPlan = await PricingPlan.findById(id);
 
     if (!pricingPlan) {
       res.status(404).json({
@@ -300,7 +299,7 @@ export const updatePricingPlan = async (
       id,
       { ...updateData, updatedAt: new Date() },
       { new: true, runValidators: true },
-    ).select("-__v");
+    );
 
     res.status(200).json({
       success: true,
@@ -344,10 +343,9 @@ export const deletePricingPlan = async (
 
     // Check if plan is being used in any active purchases
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { Purchase } = require("../purchase/purchase.model");
     const activePurchases = await Purchase.countDocuments({
       pricingPlan: id,
-      status: { $in: ["active", "pending"] },
+      status: { $in: ["completed", "pending"] },
     });
 
     if (activePurchases > 0 && permanent === "true") {
@@ -356,6 +354,7 @@ export const deletePricingPlan = async (
         message:
           "Cannot permanently delete pricing plan with active purchases. Deactivate instead.",
       });
+      return;
     }
 
     if (permanent === "true") {

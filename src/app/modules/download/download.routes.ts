@@ -3,12 +3,14 @@ import { authenticate, authorize } from "../../middlewares/auth";
 import {
   validateParams,
   validateQuery,
-} from "../../middlewares/validateZodScheamas";
+} from "../../middlewares/validateZodSchemas";
+
 import {
   downloadDesignSchema,
   downloadQuerySchema,
   downloadAnalyticsSchema,
 } from "./download.validation";
+
 import {
   downloadDesign,
   getUserDownloads,

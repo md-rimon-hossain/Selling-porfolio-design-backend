@@ -11,7 +11,7 @@ const designSchema = new Schema<IDesign>(
     category: {
       type: Schema.Types.ObjectId,
       ref: "Category",
-      required: [true, "Category is required"],
+      required: [true, "Category reference ID is required"],
     },
     description: {
       type: String,
@@ -61,8 +61,13 @@ const designSchema = new Schema<IDesign>(
     ],
     status: {
       type: String,
-      enum: ["Active", "Draft", "Archived"],
-      default: "Draft",
+      enum: ["Active", "Completed", "Archived"],
+      default: "Active",
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      select: false,
     },
     likesCount: {
       type: Number,

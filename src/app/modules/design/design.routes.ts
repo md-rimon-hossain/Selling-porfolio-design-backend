@@ -4,13 +4,15 @@ import {
   validateBody,
   validateParams,
   validateQuery,
-} from "../../middlewares/validateZodScheamas";
+} from "../../middlewares/validateZodSchemas";
+
 import {
   createDesignSchema,
   updateDesignSchema,
   designParamsSchema,
   designQuerySchema,
 } from "./design.validation";
+
 import {
   createNewDesign,
   getAllDesigns,
@@ -22,15 +24,10 @@ import {
 const router = express.Router();
 
 // Get all designs (Public - anyone can see)
-router.get("/", authenticate, validateQuery(designQuerySchema), getAllDesigns);
+router.get("/", validateQuery(designQuerySchema), getAllDesigns);
 
 // Get single design by ID (Public)
-router.get(
-  "/:id",
-  authenticate,
-  validateParams(designParamsSchema),
-  getSingleDesign,
-);
+router.get("/:id", validateParams(designParamsSchema), getSingleDesign);
 
 // Create new design (Admin only)
 router.post(

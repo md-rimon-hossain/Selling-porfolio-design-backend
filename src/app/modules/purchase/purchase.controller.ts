@@ -103,13 +103,13 @@ export const createPurchase = async (
         user: req.user._id,
         design,
         purchaseType: "individual",
-        status: { $in: ["active", "pending"] },
+        status: { $in: ["completed", "pending"] },
       });
 
       if (existingDesignPurchase) {
         res.status(409).json({
           success: false,
-          message: "You have already purchased this design",
+          message:  `You have already ${existingDesignPurchase.status} purchased this design`,
         });
         return;
       }
@@ -443,7 +443,7 @@ export const getPurchaseById = async (
     // Check if user is authorized to view this purchase
     if (
       req.user?.role !== "admin" &&
-      purchase.user?._id.toString() !== req.user?._id
+      purchase.user?._id.toString() !== req.user?._id?.toString()
     ) {
       res.status(403).json({
         success: false,
@@ -508,7 +508,7 @@ export const updatePurchaseStatus = async (
     }
 
     // Set activation date if status is being changed to active
-    if (status === "active" && purchase.status !== "active") {
+    if (status === "completed" && purchase.status !== "completed") {
       updateData.activatedAt = new Date();
 
       // For subscription purchases, set subscription dates and download limits
@@ -593,11 +593,11 @@ export const cancelPurchase = async (
       });
       return;
     }
-
+    
     // Check if user is authorized to cancel this purchase
     if (
       req.user?.role !== "admin" &&
-      purchase.user?.toString() !== req.user?._id
+      purchase.user?.toString() !== req.user?._id?.toString()
     ) {
       res.status(403).json({
         success: false,

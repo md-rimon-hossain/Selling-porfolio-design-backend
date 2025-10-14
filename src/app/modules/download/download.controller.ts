@@ -14,6 +14,8 @@ export const downloadDesign = async (
     const { designId } = req.params;
     const userId = req.user?._id;
 
+  
+
     if (!userId) {
       res.status(401).json({
         success: false,
@@ -41,7 +43,7 @@ export const downloadDesign = async (
     }
 
     // Check if user has permission to download this design
-    const permission = await checkDownloadPermission(userId, designId);
+    const permission = await checkDownloadPermission(userId.toString(), designId);
 
     if (!permission.allowed) {
       res.status(403).json({
@@ -78,7 +80,6 @@ export const downloadDesign = async (
     const populatedDownload = await Download.findById(download._id)
       .populate("design", "title previewImageUrl designerName price")
       .populate("user", "name email")
-      .select("-__v");
 
     res.status(200).json({
       success: true,
@@ -121,8 +122,9 @@ const checkDownloadPermission = async (
     user: userId,
     design: designId,
     purchaseType: "individual",
-    status: "active",
+    status: "completed",
   });
+
 
   if (individualPurchase) {
     return {

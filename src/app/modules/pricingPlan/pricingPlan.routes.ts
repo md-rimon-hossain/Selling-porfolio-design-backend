@@ -4,7 +4,8 @@ import {
   validateBody,
   validateParams,
   validateQuery,
-} from "../../middlewares/validateZodScheamas";
+} from "../../middlewares/validateZodSchemas";
+
 import {
   createPricingPlanSchema,
   updatePricingPlanSchema,
@@ -12,6 +13,7 @@ import {
   pricingPlanParamsSchema,
   pricingPlanAnalyticsSchema,
 } from "./pricingPlan.validation";
+
 import {
   createPricingPlan,
   getAllPricingPlans,
@@ -48,6 +50,7 @@ router.get("/:id", validateParams(pricingPlanParamsSchema), getPricingPlanById);
 router.get(
   "/",
   authenticate,
+  authorize("admin"),
   validateQuery(pricingPlanQuerySchema),
   getAllPricingPlans,
 );

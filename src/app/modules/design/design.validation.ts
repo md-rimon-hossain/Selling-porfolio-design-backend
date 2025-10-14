@@ -75,8 +75,8 @@ export const createDesignSchema = z.object({
       .enum(["Active", "Draft", "Archived"], {
         invalid_type_error: "Status must be 'Active', 'Draft', or 'Archived'",
       })
-      .default("Draft"),
-
+      .default("Active"),
+    isDeleted: z.boolean().default(false),
     likesCount: z
       .number()
       .int("Likes count must be an integer")
@@ -164,6 +164,7 @@ export const updateDesignSchema = z.object({
         invalid_type_error: "Status must be 'Active', 'Draft', or 'Archived'",
       })
       .optional(),
+    isDeleted: z.boolean().optional(),
 
     likesCount: z
       .number()

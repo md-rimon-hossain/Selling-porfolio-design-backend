@@ -4,7 +4,8 @@ import {
   validateBody,
   validateParams,
   validateQuery,
-} from "../../middlewares/validateZodScheamas";
+} from "../../middlewares/validateZodSchemas";
+
 import {
   createPurchaseSchema,
   updatePurchaseSchema,
@@ -13,6 +14,7 @@ import {
   purchaseParamsSchema,
   purchaseAnalyticsSchema,
 } from "./purchase.validation";
+
 import {
   createPurchase,
   getAllPurchases,
