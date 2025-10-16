@@ -41,9 +41,8 @@ export const createPurchaseSchema = z
           cardholderName: z.string().optional(),
           paypalEmail: z.string().email().optional(),
           bankAccountNumber: z.string().optional(),
-        })
-        .optional(),
-
+        }),
+        
       currency: z
         .string()
         .length(3, "Currency must be 3 characters")
@@ -114,7 +113,10 @@ export const cancelPurchaseSchema = z.object({
 export const purchaseQuerySchema = z.object({
   query: z.object({
     paymentStatus: z.enum(["Pending", "Paid", "Cancelled"]).optional(),
-
+    purchaseType: z.enum(["individual", "subscription"]).optional(),
+    status: z
+      .enum(["pending", "completed", "expired", "cancelled", "refunded"])
+      .optional(),
     customer: z
       .string()
       .regex(/^[0-9a-fA-F]{24}$/, "Invalid customer ID format")
@@ -149,7 +151,7 @@ export const purchaseQuerySchema = z.object({
 
     sortBy: z
       .enum(["purchaseDate", "createdAt", "updatedAt"])
-      .default("createdAt"),
+      .default("purchaseDate"),
 
     sortOrder: z.enum(["asc", "desc"]).default("desc"),
   }),
