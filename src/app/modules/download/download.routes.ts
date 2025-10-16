@@ -8,10 +8,12 @@ import {
 import {
   downloadDesignSchema,
   downloadQuerySchema,
+  adminDownloadQuerySchema,
   downloadAnalyticsSchema,
 } from "./download.validation";
 
 import {
+  getAllDownloads,
   downloadDesign,
   getUserDownloads,
   getUserSubscriptionStatus,
@@ -19,6 +21,33 @@ import {
 } from "./download.controller";
 
 const router = Router();
+
+// Admin routes
+/**
+ * @route   GET /api/v1/downloads
+ * @desc    Get all downloads with advanced filters (Admin only)
+ * @access  Private (Admin only)
+ */
+router.get(
+  "/",
+  authenticate,
+  authorize("admin"),
+  validateQuery(adminDownloadQuerySchema),
+  getAllDownloads,
+);
+
+/**
+ * @route   GET /api/v1/downloads/analytics
+ * @desc    Get download analytics and statistics
+ * @access  Private (Admin only)
+ */
+router.get(
+  "/analytics",
+  authenticate,
+  authorize("admin"),
+  validateQuery(downloadAnalyticsSchema),
+  getDownloadAnalytics,
+);
 
 // User routes (require authentication)
 /**
@@ -50,20 +79,6 @@ router.post(
   authenticate,
   validateParams(downloadDesignSchema),
   downloadDesign,
-);
-
-// Admin routes
-/**
- * @route   GET /api/v1/downloads/analytics
- * @desc    Get download analytics and statistics
- * @access  Private (Admin only)
- */
-router.get(
-  "/analytics",
-  authenticate,
-  authorize("admin"),
-  validateQuery(downloadAnalyticsSchema),
-  getDownloadAnalytics,
 );
 
 export default router;

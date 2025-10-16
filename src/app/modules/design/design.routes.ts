@@ -33,7 +33,7 @@ router.get("/:id", validateParams(designParamsSchema), getSingleDesign);
 router.post(
   "/",
   authenticate,
-  authorize("admin"),
+  authorize("admin",),
   validateBody(createDesignSchema),
   createNewDesign,
 );

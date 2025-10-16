@@ -1,5 +1,9 @@
 import express from "express";
-import { loginController, registerUserController } from "./auth.controller";
+import {
+  loginController,
+  logoutController,
+  registerUserController,
+} from "./auth.controller";
 import { validateBody } from "../../middlewares/validateZodSchemas";
 import { loginSchema, registerSchema } from "./auth.validation";
 
@@ -11,4 +15,5 @@ router.post("/register", validateBody(registerSchema), registerUserController);
 // Login user
 router.post("/login", validateBody(loginSchema), loginController);
 
+router.post("/logout", logoutController);
 export default router;

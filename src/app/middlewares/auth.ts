@@ -20,12 +20,14 @@ export const authenticate = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const token = req.header("Authorization")?.replace("Bearer ", "");
+    // Get token from cookie instead of header
+    const token = req.cookies?.token;
 
     if (!token) {
       res.status(401).json({
         success: false,
-        message: "Access denied. No token provided from client side.",
+        message:
+          "Access denied. Not token provided. You must be logged in to access this resource.",
       });
       return;
     }
@@ -34,7 +36,7 @@ export const authenticate = async (
       token,
       config.jwt_secret as string,
     ) as JWTPayload;
-    const user = await User.findById(decoded.userId);
+    const user = await User.findById(decoded.userId).select("-isDeleted");
 
     if (!user) {
       res.status(401).json({

@@ -8,11 +8,13 @@ import express, {
 import cors from "cors";
 import router from "./app/routes/index";
 import morgan from "morgan";
+import cookieParser from "cookie-parser"
 const app: Application = express();
 
 // Parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser())
 app.use(
   cors({
     origin: ["http://localhost:3000", "http://127.0.0.1:3000"], // Specify your frontend URLs

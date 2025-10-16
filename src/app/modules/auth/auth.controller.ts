@@ -44,11 +44,18 @@ const registerUserController= async (req: Request, res: Response): Promise<void>
     // Create JWT token for the new user
     const token = createToken(user._id as string, user.email, user.role);
 
+    // Set httpOnly cookie
+    res.cookie("token", token, {
+      httpOnly: true, // cannot be accessed by JS
+      secure: process.env.NODE_ENV === "production", // only HTTPS in prod
+      sameSite: "strict", // protects against CSRF
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+    });
+
     res.status(201).json({
       success: true,
       message: "User registered successfully",
       data: {
-        token,
         user: {
           id: user._id,
           name: user.name,
@@ -99,15 +106,23 @@ const loginController = async (req: Request, res: Response): Promise<void> => {
     // Create JWT token for successful login
     const token = createToken(user._id as string, user.email, user.role);
 
+    // Set httpOnly cookie
+    res.cookie("token", token, {
+      httpOnly: true, // cannot be accessed by JS
+      secure: process.env.NODE_ENV === "production", // only HTTPS in prod
+      sameSite: "strict", // protects against CSRF
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+    });
+
     res.status(200).json({
       success: true,
       message: "Login successful",
       data: {
-        token,
         user: {
           id: user._id,
           name: user.name,
           email: user.email,
+          profileImage: user.profileImage || "",
           role: user.role,
         },
       },
@@ -123,4 +138,25 @@ const loginController = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export { registerUserController, loginController };
+const logoutController = (req: Request, res: Response): void => {
+
+  if (!req.cookies || !req.cookies.token) {
+    res.status(400).json({
+      success: false,
+      message: "No active session found! You are already logged out.",
+    });
+    return;
+  }
+
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  }); 
+  res.status(200).json({
+    success: true,
+    message: "Logout successful",
+  });
+};
+
+export { registerUserController, loginController, logoutController };

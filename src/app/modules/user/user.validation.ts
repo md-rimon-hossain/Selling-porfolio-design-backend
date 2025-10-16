@@ -115,8 +115,51 @@ export const userParamsSchema = z.object({
   }),
 });
 
+// User query parameters validation schema
+export const userQuerySchema = z.object({
+  query: z.object({
+    role: z.enum(["admin", "customer"]).optional(),
+
+    isActive: z
+      .string()
+      .transform((val) => val === "true")
+      .optional(),
+
+    search: z
+      .string()
+      .min(1, "Search term cannot be empty")
+      .max(100, "Search term cannot exceed 100 characters")
+      .optional(),
+
+    page: z
+      .string()
+      .transform((val) => parseInt(val, 10))
+      .refine(
+        (val) => !isNaN(val) && val > 0,
+        "Page must be a positive integer",
+      )
+      .default("1"),
+
+    limit: z
+      .string()
+      .transform((val) => parseInt(val, 10))
+      .refine(
+        (val) => !isNaN(val) && val > 0 && val <= 100,
+        "Limit must be between 1 and 100",
+      )
+      .default("10"),
+
+    sortBy: z
+      .enum(["name", "email", "createdAt", "updatedAt"])
+      .default("createdAt"),
+
+    sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  }),
+});
+
 export type CreateUserInput = z.TypeOf<typeof createUserSchema>;
 export type LoginUserInput = z.TypeOf<typeof loginUserSchema>;
 export type UpdateUserInput = z.TypeOf<typeof updateUserSchema>;
 export type ChangePasswordInput = z.TypeOf<typeof changePasswordSchema>;
 export type UserParamsInput = z.TypeOf<typeof userParamsSchema>;
+export type UserQueryInput = z.TypeOf<typeof userQuerySchema>;

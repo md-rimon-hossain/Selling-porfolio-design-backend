@@ -75,7 +75,6 @@ router.get(
   "/",
   authenticate,
   authorize("admin"),
-  validateQuery(purchaseQuerySchema),
   getAllPurchases,
 );
 
