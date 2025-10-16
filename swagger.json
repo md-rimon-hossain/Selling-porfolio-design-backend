@@ -1,0 +1,594 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Graphic-Lab REST API",
+    "description": "Auto–generated OpenAPI specification that covers all public routes discovered in the provided source-code (auth, users, categories, designs, pricing plans, purchases, reviews, downloads).  Every response object is wrapped by   `{ success:boolean, message:string, data?:T, pagination?:Pagination }`  or `{ success:false, message:string, error?:string }`.  Only the variable **data** structure is shown in `schemas` below; the common envelope is omitted for brevity.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000/api",
+      "description": "Local development server"
+    }
+  ],
+  "tags": [
+    { "name": "Auth" },
+    { "name": "Users" },
+    { "name": "Categories" },
+    { "name": "Designs" },
+    { "name": "PricingPlans" },
+    { "name": "Purchases" },
+    { "name": "Reviews" },
+    { "name": "Downloads" }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterUserInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "User created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login user",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginInput" } } }
+        },
+        "responses": {
+          "200": { "description": "Logged in", "headers": { "Set-Cookie": { "schema": { "type": "string" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Logout current user (clears cookie)",
+        "responses": { "200": { "description": "Logged out" } }
+      }
+    },
+
+    "/users/myProfile": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get current user's profile",
+        "security": [{ "cookieAuth": [] }],
+        "responses": { "200": { "description": "Profile", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } } }
+      }
+    },
+
+    "/categories": {
+      "get": {
+        "tags": ["Categories"],
+        "summary": "List all active categories",
+        "responses": { "200": { "description": "Category array", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Category" } } } } } }
+      },
+      "post": {
+        "tags": ["Categories"],
+        "summary": "Create category (admin)",
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateCategoryInput" } } } },
+        "responses": { "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Category" } } } } }
+      }
+    },
+    "/categories/{id}": {
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/ObjectId" } }
+      ],
+      "get": {
+        "tags": ["Categories"],
+        "summary": "Get category by ID",
+        "responses": { "200": { "description": "Category", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Category" } } } }, "404": { "$ref": "#/components/responses/NotFound" } }
+      },
+      "put": {
+        "tags": ["Categories"],
+        "summary": "Update category (admin)",
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateCategoryInput" } } } },
+        "responses": { "200": { "description": "Updated" } }
+      },
+      "delete": {
+        "tags": ["Categories"],
+        "summary": "Soft delete category (admin)",
+        "security": [{ "cookieAuth": [] }],
+        "responses": { "200": { "description": "Deleted" } }
+      }
+    },
+
+    "/designs": {
+      "get": {
+        "tags": ["Designs"],
+        "summary": "Search & list designs",
+        "parameters": [
+          { "$ref": "#/components/parameters/Page" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "name": "category", "in": "query", "schema": { "$ref": "#/components/schemas/ObjectId" } },
+          { "name": "complexityLevel", "in": "query", "schema": { "type": "string", "enum": ["Basic", "Intermediate", "Advanced"] } },
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["Active", "Draft", "Archived"] }, "description": "Defaults to Active" },
+          { "name": "minPrice", "in": "query", "schema": { "type": "number", "minimum": 0 } },
+          { "name": "maxPrice", "in": "query", "schema": { "type": "number", "minimum": 0 } },
+          { "name": "search", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Design array with pagination" } }
+      },
+      "post": {
+        "tags": ["Designs"],
+        "summary": "Create design (admin)",
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateDesignInput" } } } },
+        "responses": { "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Design" } } } } }
+      }
+    },
+    "/designs/{id}": {
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/ObjectId" } }
+      ],
+      "get": {
+        "tags": ["Designs"],
+        "summary": "Get single design",
+        "responses": { "200": { "description": "Design", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Design" } } } }, "404": { "$ref": "#/components/responses/NotFound" } }
+      },
+      "put": {
+        "tags": ["Designs"],
+        "summary": "Update design (admin)",
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateDesignInput" } } } },
+        "responses": { "200": { "description": "Updated" } }
+      },
+      "delete": {
+        "tags": ["Designs"],
+        "summary": "Delete design (admin)",
+        "security": [{ "cookieAuth": [] }],
+        "responses": { "200": { "description": "Deleted" } }
+      }
+    },
+
+    "/pricing-plans/active": {
+      "get": {
+        "tags": ["PricingPlans"],
+        "summary": "List all active plans (public)",
+        "responses": { "200": { "description": "Plan array", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/PricingPlan" } } } } } }
+      }
+    },
+    "/pricing-plans/analytics/overview": {
+      "get": {
+        "tags": ["PricingPlans"],
+        "summary": "Pricing plan analytics (admin)",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/Period" },
+          { "name": "startDate", "in": "query", "schema": { "type": "string", "format": "date" } },
+          { "name": "endDate", "in": "query", "schema": { "type": "string", "format": "date" } }
+        ],
+        "responses": { "200": { "description": "Analytics object" } }
+      }
+    },
+    "/pricing-plans": {
+      "get": {
+        "tags": ["PricingPlans"],
+        "summary": "List plans (admin)",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/Page" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "name": "isActive", "in": "query", "schema": { "type": "boolean" } },
+          { "name": "minPrice", "in": "query", "schema": { "type": "number" } },
+          { "name": "maxPrice", "in": "query", "schema": { "type": "number" } },
+          { "name": "search", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Plan list with pagination" } }
+      },
+      "post": {
+        "tags": ["PricingPlans"],
+        "summary": "Create pricing plan (admin)",
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreatePricingPlanInput" } } } },
+        "responses": { "201": { "description": "Created" } }
+      }
+    },
+    "/pricing-plans/{id}": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/ObjectId" } }],
+      "get": {
+        "tags": ["PricingPlans"],
+        "summary": "Get plan by id",
+        "responses": { "200": { "description": "Plan", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PricingPlan" } } } } }
+      },
+      "put": {
+        "tags": ["PricingPlans"],
+        "summary": "Update plan (admin)",
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdatePricingPlanInput" } } } },
+        "responses": { "200": { "description": "Updated" } }
+      },
+      "delete": {
+        "tags": ["PricingPlans"],
+        "summary": "Delete / deactivate plan (admin)",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [
+          { "name": "permanent", "in": "query", "schema": { "type": "boolean" }, "required": false }
+        ],
+        "responses": { "200": { "description": "Deleted / deactivated" } }
+      }
+    },
+
+    "/purchases/subscription-eligibility": {
+      "get": {
+        "tags": ["Purchases"],
+        "summary": "Check if current user can buy a subscription",
+        "security": [{ "cookieAuth": [] }],
+        "responses": { "200": { "description": "Eligibility result" } }
+      }
+    },
+    "/purchases/analytics": {
+      "get": {
+        "tags": ["Purchases"],
+        "summary": "Purchase analytics (admin)",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/Period" },
+          { "name": "startDate", "in": "query", "schema": { "type": "string", "format": "date-time" } },
+          { "name": "endDate", "in": "query", "schema": { "type": "string", "format": "date-time" } },
+          { "name": "designId", "in": "query", "schema": { "$ref": "#/components/schemas/ObjectId" } }
+        ],
+        "responses": { "200": { "description": "Analytics" } }
+      }
+    },
+    "/purchases/my-purchases": {
+      "get": {
+        "tags": ["Purchases"],
+        "summary": "List current user's purchases",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/Page" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["pending", "completed", "expired", "cancelled", "refunded"] } }
+        ],
+        "responses": { "200": { "description": "Purchases list" } }
+      }
+    },
+    "/purchases": {
+      "get": {
+        "tags": ["Purchases"],
+        "summary": "List all purchases (admin)",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/Page" },
+          { "$ref": "#/components/parameters/Limit" }
+        ],
+        "responses": { "200": { "description": "Purchase array" } }
+      },
+      "post": {
+        "tags": ["Purchases"],
+        "summary": "Create new purchase (user)",
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreatePurchaseInput" } } } },
+        "responses": { "201": { "description": "Purchase created" } }
+      }
+    },
+    "/purchases/{id}": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/ObjectId" } }],
+      "get": {
+        "tags": ["Purchases"],
+        "summary": "Get purchase by id (owner or admin)",
+        "security": [{ "cookieAuth": [] }],
+        "responses": { "200": { "description": "Purchase" } }
+      },
+      "delete": {
+        "tags": ["Purchases"],
+        "summary": "Cancel purchase (owner or admin)",
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CancelPurchaseInput" } } } },
+        "responses": { "200": { "description": "Cancelled" } }
+      }
+    },
+    "/purchases/{id}/status": {
+      "put": {
+        "tags": ["Purchases"],
+        "summary": "Update purchase status (admin)",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/ObjectId" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdatePurchaseStatusInput" } } } },
+        "responses": { "200": { "description": "Updated" } }
+      }
+    },
+
+    "/reviews/design/{designId}": {
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "List reviews for a design",
+        "parameters": [
+          { "name": "designId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/ObjectId" } },
+          { "$ref": "#/components/parameters/Page" },
+          { "$ref": "#/components/parameters/Limit" }
+        ],
+        "responses": { "200": { "description": "Review list + stats" } }
+      }
+    },
+    "/reviews/analytics/overview": {
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "Review analytics (admin)",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/Period" },
+          { "name": "designId", "in": "query", "schema": { "$ref": "#/components/schemas/ObjectId" } }
+        ],
+        "responses": { "200": { "description": "Analytics" } }
+      }
+    },
+    "/reviews": {
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "List all reviews (admin)",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/Page" },
+          { "$ref": "#/components/parameters/Limit" }
+        ],
+        "responses": { "200": { "description": "Review array" } }
+      },
+      "post": {
+        "tags": ["Reviews"],
+        "summary": "Create review (user)",
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateReviewInput" } } } },
+        "responses": { "201": { "description": "Created" } }
+      }
+    },
+    "/reviews/{id}": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/ObjectId" } }],
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "Get single review",
+        "responses": { "200": { "description": "Review" } }
+      },
+      "put": {
+        "tags": ["Reviews"],
+        "summary": "Update review",
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateReviewInput" } } } },
+        "responses": { "200": { "description": "Updated" } }
+      },
+      "delete": {
+        "tags": ["Reviews"],
+        "summary": "Delete review",
+        "security": [{ "cookieAuth": [] }],
+        "responses": { "200": { "description": "Deleted" } }
+      }
+    },
+    "/reviews/{id}/helpful": {
+      "put": {
+        "tags": ["Reviews"],
+        "summary": "Mark review helpful/unhelpful",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/ObjectId" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MarkHelpfulInput" } } } },
+        "responses": { "200": { "description": "Marked" } }
+      }
+    },
+
+    "/downloads/subscription-status": {
+      "get": {
+        "tags": ["Downloads"],
+        "summary": "Get current user's subscription download stats",
+        "security": [{ "cookieAuth": [] }],
+        "responses": { "200": { "description": "Status" } }
+      }
+    },
+    "/downloads/my-downloads": {
+      "get": {
+        "tags": ["Downloads"],
+        "summary": "List user's downloads",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/Page" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "name": "downloadType", "in": "query", "schema": { "type": "string", "enum": ["individual_purchase", "subscription"] } }
+        ],
+        "responses": { "200": { "description": "Download list" } }
+      }
+    },
+    "/downloads/design/{designId}": {
+      "post": {
+        "tags": ["Downloads"],
+        "summary": "Download a design (purchase/subscription required)",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [{ "name": "designId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/ObjectId" } }],
+        "responses": { "200": { "description": "Returns download info + temp URL" } }
+      }
+    },
+    "/downloads/analytics": {
+      "get": {
+        "tags": ["Downloads"],
+        "summary": "Download analytics (admin)",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/Period" },
+          { "name": "startDate", "in": "query", "schema": { "type": "string", "format": "date-time" } },
+          { "name": "endDate", "in": "query", "schema": { "type": "string", "format": "date-time" } }
+        ],
+        "responses": { "200": { "description": "Analytics" } }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "token"
+      }
+    },
+    "parameters": {
+      "Page": { "name": "page", "in": "query", "schema": { "type": "integer", "minimum": 1, "default": 1 } },
+      "Limit": { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 10 } },
+      "Period": { "name": "period", "in": "query", "schema": { "type": "string", "enum": ["daily", "weekly", "monthly", "yearly"], "default": "monthly" } }
+    },
+    "responses": {
+      "BadRequest": { "description": "Validation / bad request" },
+      "Unauthorized": { "description": "Unauthorized" },
+      "NotFound": { "description": "Resource not found" }
+    },
+    "schemas": {
+      "ObjectId": {
+        "type": "string",
+        "pattern": "^[0-9a-fA-F]{24}$",
+        "example": "64b8f4ff9c0a5d1c0b123456"
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "$ref": "#/components/schemas/ObjectId" },
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "role": { "type": "string", "enum": ["admin", "customer"] },
+          "profileImage": { "type": "string", "format": "uri", "nullable": true }
+        }
+      },
+      "RegisterUserInput": {
+        "type": "object",
+        "required": ["name", "email", "password"],
+        "properties": {
+          "name": { "type": "string", "minLength": 2, "maxLength": 50 },
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 6 },
+          "confirmPassword": { "type": "string" },
+          "role": { "type": "string", "enum": ["admin", "customer"] }
+        }
+      },
+      "LoginInput": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string" }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "id": { "$ref": "#/components/schemas/ObjectId" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "isActive": { "type": "boolean" }
+        }
+      },
+      "CreateCategoryInput": {
+        "type": "object",
+        "required": ["name", "description"],
+        "properties": {
+          "name": { "type": "string", "minLength": 2, "maxLength": 50 },
+          "description": { "type": "string", "minLength": 10, "maxLength": 200 },
+          "isActive": { "type": "boolean", "default": true }
+        }
+      },
+      "UpdateCategoryInput": {
+        "allOf": [{ "$ref": "#/components/schemas/CreateCategoryInput" }]
+      },
+      "Design": {
+        "type": "object",
+        "properties": {
+          "id": { "$ref": "#/components/schemas/ObjectId" },
+          "title": { "type": "string" },
+          "category": { "$ref": "#/components/schemas/Category" },
+          "description": { "type": "string" },
+          "previewImageUrl": { "type": "string", "format": "uri" },
+          "designerName": { "type": "string" },
+          "usedTools": { "type": "array", "items": { "type": "string" } },
+          "effectsUsed": { "type": "array", "items": { "type": "string" } },
+          "price": { "type": "number" },
+          "processDescription": { "type": "string" },
+          "complexityLevel": { "type": "string", "enum": ["Basic", "Intermediate", "Advanced"] },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "status": { "type": "string", "enum": ["Active", "Draft", "Archived"] },
+          "likesCount": { "type": "integer" },
+          "downloadCount": { "type": "integer" }
+        }
+      },
+      "CreateDesignInput": {
+        "allOf": [{ "$ref": "#/components/schemas/Design" }],
+        "required": ["title", "category", "description", "previewImageUrl", "designerName", "usedTools", "effectsUsed", "price", "processDescription", "complexityLevel", "tags"]
+      },
+      "UpdateDesignInput": {
+        "type": "object",
+        "properties": { "$ref": "#/components/schemas/Design/properties" }
+      },
+      "PricingPlan": {
+        "type": "object",
+        "properties": {
+          "id": { "$ref": "#/components/schemas/ObjectId" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "price": { "type": "number" },
+          "finalPrice": { "type": "number" },
+          "duration": { "type": "string" },
+          "features": { "type": "array", "items": { "type": "string" } },
+          "maxDownloads": { "type": "integer" },
+          "isActive": { "type": "boolean" }
+        }
+      },
+      "CreatePricingPlanInput": {
+        "allOf": [{ "$ref": "#/components/schemas/PricingPlan" }],
+        "required": ["name", "price", "duration", "features"]
+      },
+      "UpdatePricingPlanInput": { "allOf": [{ "$ref": "#/components/schemas/CreatePricingPlanInput" }] },
+      "CreatePurchaseInput": {
+        "type": "object",
+        "required": ["purchaseType"],
+        "properties": {
+          "purchaseType": { "type": "string", "enum": ["individual", "subscription"] },
+          "design": { "$ref": "#/components/schemas/ObjectId" },
+          "pricingPlan": { "$ref": "#/components/schemas/ObjectId" },
+          "paymentMethod": { "type": "string", "enum": ["credit_card", "paypal", "stripe", "bank_transfer", "free"] },
+          "paymentDetails": { "type": "object", "additionalProperties": true },
+          "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+          "billingAddress": { "type": "object", "additionalProperties": true },
+          "notes": { "type": "string" }
+        }
+      },
+      "UpdatePurchaseStatusInput": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["pending", "completed", "expired", "cancelled", "refunded"] },
+          "adminNotes": { "type": "string" }
+        }
+      },
+      "CancelPurchaseInput": {
+        "type": "object",
+        "properties": { "cancelReason": { "type": "string" } }
+      },
+      "CreateReviewInput": {
+        "type": "object",
+        "required": ["designId", "rating", "comment"],
+        "properties": {
+          "designId": { "$ref": "#/components/schemas/ObjectId" },
+          "rating": { "type": "integer", "minimum": 1, "maximum": 5 },
+          "comment": { "type": "string" },
+          "title": { "type": "string" },
+          "pros": { "type": "array", "items": { "type": "string" } },
+          "cons": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "UpdateReviewInput": { "allOf": [{ "$ref": "#/components/schemas/CreateReviewInput" }] },
+      "MarkHelpfulInput": {
+        "type": "object",
+        "required": ["isHelpful"],
+        "properties": { "isHelpful": { "type": "boolean" } }
+      }
+    }
+  }
+}

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Response } from "express";
 import { Types } from "mongoose";
 import { Purchase } from "./purchase.model";
@@ -109,7 +110,7 @@ export const createPurchase = async (
       if (existingDesignPurchase) {
         res.status(409).json({
           success: false,
-          message:  `You have already ${existingDesignPurchase.status} purchased this design`,
+          message: `You have already ${existingDesignPurchase.status} purchased this design`,
         });
         return;
       }
@@ -248,12 +249,15 @@ export const getAllPurchases = async (
       sortOrder = "desc",
       status,
       paymentMethod,
+      purchaseType,
       minAmount,
       maxAmount,
       startDate,
       endDate,
       search,
     } = req.query;
+
+    console.log(req.query);
 
     const pageNum = parseInt(page as string, 10);
     const limitNum = parseInt(limit as string, 10);
@@ -269,6 +273,10 @@ export const getAllPurchases = async (
 
     if (paymentMethod) {
       filter.paymentMethod = paymentMethod;
+    }
+
+    if (purchaseType) {
+      filter.purchaseType = purchaseType;
     }
 
     if (minAmount) {
@@ -309,11 +317,11 @@ export const getAllPurchases = async (
 
     const purchases = await Purchase.find(filter)
       .populate("user", "name email")
+      .populate("design", "title price")
       .populate("pricingPlan", "name description price finalPrice duration")
       .sort(sort)
       .skip(skip)
-      .limit(limitNum)
-      .select("-__v");
+      .limit(limitNum);
 
     const totalPurchases = await Purchase.countDocuments(filter);
     const totalPages = Math.ceil(totalPurchases / limitNum);
@@ -354,6 +362,7 @@ export const getUserPurchases = async (
       sortBy = "purchaseDate",
       sortOrder = "desc",
       status,
+      purchaseType,
     } = req.query;
 
     const pageNum = parseInt(page as string, 10);
@@ -366,6 +375,10 @@ export const getUserPurchases = async (
 
     if (status) {
       filter.status = status;
+    }
+
+    if (purchaseType) {
+      filter.purchaseType = purchaseType;
     }
 
     // Build sort object
@@ -593,7 +606,7 @@ export const cancelPurchase = async (
       });
       return;
     }
-    
+
     // Check if user is authorized to cancel this purchase
     if (
       req.user?.role !== "admin" &&
@@ -779,7 +792,7 @@ export const getPurchaseAnalytics = async (
           totalPurchases: { $sum: 1 },
           totalRevenue: { $sum: "$amount" },
           activePurchases: {
-            $sum: { $cond: [{ $eq: ["$status", "active"] }, 1, 0] },
+            $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] },
           },
           pendingPurchases: {
             $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] },

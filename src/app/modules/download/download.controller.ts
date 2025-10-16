@@ -3,7 +3,180 @@ import { Types } from "mongoose";
 import { Download } from "./download.model";
 import { Purchase } from "../purchase/purchase.model";
 import { Design } from "../design/design.model";
+import { User } from "../user/user.model";
 import { AuthRequest } from "../../middlewares/auth";
+
+// Get all downloads (Admin only) - with advanced filters
+export const getAllDownloads = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = "downloadDate",
+      sortOrder = "desc",
+      downloadType,
+      userId,
+      designId,
+      search,
+      startDate,
+      endDate,
+    } = req.query;
+
+    const pageNum = parseInt(page as string, 10);
+    const limitNum = parseInt(limit as string, 10);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Build filter object
+    const filter: Record<string, unknown> = {};
+
+    // Filter by download type
+    if (downloadType) {
+      filter.downloadType = downloadType;
+    }
+
+    // Filter by user ID
+    if (userId && Types.ObjectId.isValid(userId as string)) {
+      filter.user = new Types.ObjectId(userId as string);
+    }
+
+    // Filter by design ID
+    if (designId && Types.ObjectId.isValid(designId as string)) {
+      filter.design = new Types.ObjectId(designId as string);
+    }
+
+    // Filter by date range
+    if (startDate || endDate) {
+      filter.downloadDate = {} as { $gte?: Date; $lte?: Date };
+      if (startDate) {
+        (filter.downloadDate as { $gte?: Date; $lte?: Date }).$gte = new Date(
+          startDate as string,
+        );
+      }
+      if (endDate) {
+        (filter.downloadDate as { $gte?: Date; $lte?: Date }).$lte = new Date(
+          endDate as string,
+        );
+      }
+    }
+
+    // Build sort object
+    const sort: Record<string, 1 | -1> = {};
+    sort[sortBy as string] = sortOrder === "desc" ? -1 : 1;
+
+    // If search is provided, we need to search in populated fields
+    if (search) {
+      // First, find matching users or designs
+      const userIds = await User.find({
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ],
+      })
+        .distinct("_id")
+        .exec();
+
+      const designIds = await Design.find({
+        $or: [
+          { title: { $regex: search, $options: "i" } },
+          { designerName: { $regex: search, $options: "i" } },
+        ],
+      })
+        .distinct("_id")
+        .exec();
+
+      // Add search filter
+      filter.$or = [{ user: { $in: userIds } }, { design: { $in: designIds } }];
+    }
+
+    // Execute query with population
+    const downloads = await Download.find(filter)
+      .populate("user", "name email profileImage role")
+      .populate("design", "title previewImageUrl price designerName category")
+      .populate("purchase", "purchaseType amount transactionId")
+      .sort(sort)
+      .skip(skip)
+      .limit(limitNum)
+      .select("-__v");
+
+    const totalDownloads = await Download.countDocuments(filter);
+    const totalPages = Math.ceil(totalDownloads / limitNum);
+
+    // Calculate statistics
+    const stats = await Download.aggregate([
+      { $match: filter },
+      {
+        $group: {
+          _id: null,
+          totalDownloads: { $sum: 1 },
+          individualPurchases: {
+            $sum: {
+              $cond: [{ $eq: ["$downloadType", "individual_purchase"] }, 1, 0],
+            },
+          },
+          subscriptionDownloads: {
+            $sum: { $cond: [{ $eq: ["$downloadType", "subscription"] }, 1, 0] },
+          },
+          uniqueUsers: { $addToSet: "$user" },
+          uniqueDesigns: { $addToSet: "$design" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          totalDownloads: 1,
+          individualPurchases: 1,
+          subscriptionDownloads: 1,
+          uniqueUsers: { $size: "$uniqueUsers" },
+          uniqueDesigns: { $size: "$uniqueDesigns" },
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      message: "All downloads retrieved successfully",
+      data: downloads,
+      pagination: {
+        currentPage: pageNum,
+        totalPages,
+        totalItems: totalDownloads,
+        itemsPerPage: limitNum,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1,
+      },
+      statistics: stats[0] || {
+        totalDownloads: 0,
+        individualPurchases: 0,
+        subscriptionDownloads: 0,
+        uniqueUsers: 0,
+        uniqueDesigns: 0,
+      },
+      filters: {
+        downloadType: downloadType || null,
+        userId: userId || null,
+        designId: designId || null,
+        search: search || null,
+        dateRange: {
+          startDate: startDate || null,
+          endDate: endDate || null,
+        },
+        sortBy,
+        sortOrder,
+      },
+    });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Error fetching all downloads:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
 
 // Download a design
 export const downloadDesign = async (
@@ -13,8 +186,6 @@ export const downloadDesign = async (
   try {
     const { designId } = req.params;
     const userId = req.user?._id;
-
-  
 
     if (!userId) {
       res.status(401).json({
@@ -43,7 +214,10 @@ export const downloadDesign = async (
     }
 
     // Check if user has permission to download this design
-    const permission = await checkDownloadPermission(userId.toString(), designId);
+    const permission = await checkDownloadPermission(
+      userId.toString(),
+      designId,
+    );
 
     if (!permission.allowed) {
       res.status(403).json({
@@ -66,6 +240,13 @@ export const downloadDesign = async (
 
     await download.save();
 
+    // Increment the design download count
+    await Design.findByIdAndUpdate(
+      designId,
+      { $inc: { downloadCount: 1 } },
+      { new: true },
+    );
+
     // Update remaining downloads for subscription purchases
     if (permission.downloadType === "subscription" && permission.purchaseId) {
       await Purchase.findByIdAndUpdate(
@@ -79,7 +260,7 @@ export const downloadDesign = async (
     // or stream the file directly. For now, we'll return download info
     const populatedDownload = await Download.findById(download._id)
       .populate("design", "title previewImageUrl designerName price")
-      .populate("user", "name email")
+      .populate("user", "name email");
 
     res.status(200).json({
       success: true,
@@ -124,7 +305,6 @@ const checkDownloadPermission = async (
     purchaseType: "individual",
     status: "completed",
   });
-
 
   if (individualPurchase) {
     return {
