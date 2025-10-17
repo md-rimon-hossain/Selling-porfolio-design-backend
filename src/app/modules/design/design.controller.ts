@@ -15,25 +15,11 @@ const getAllDesigns = async (req: Request, res: Response): Promise<void> => {
       search,
     } = req.query;
 
-    // Build filter object
-    const filter: Record<string, unknown> = {
-      isDeleted: false, // Exclude deleted designs
-    };
+    const filter: Record<string, unknown> = { isDeleted: false };
 
-    // Status filter (default to Active if not specified)
-    if (status) {
-      filter.status = status;
-    }
-
-    // Category filter
-    if (category) {
-      filter.category = category;
-    }
-
-    // Complexity level filter
-    if (complexityLevel) {
-      filter.complexityLevel = complexityLevel;
-    }
+    if (status) filter.status = status;
+    if (category) filter.category = category;
+    if (complexityLevel) filter.complexityLevel = complexityLevel;
 
     // Price range filter
     if (minPrice !== undefined || maxPrice !== undefined) {
@@ -50,7 +36,7 @@ const getAllDesigns = async (req: Request, res: Response): Promise<void> => {
       }
     }
 
-    // Search filter (search in title, description, and tags)
+    // Search filter
     if (search) {
       filter.$or = [
         { title: { $regex: search, $options: "i" } },
@@ -59,37 +45,63 @@ const getAllDesigns = async (req: Request, res: Response): Promise<void> => {
       ];
     }
 
-    // Calculate pagination
+    // Active categories only
+    const activeCategories = await Category.find({
+      isActive: true,
+      isDeleted: false,
+    }).distinct("_id");
+    filter.category = { $in: activeCategories };
+
+    // Pagination
     const pageNum = parseInt(page as string, 10);
     const limitNum = parseInt(limit as string, 10);
     const skip = (pageNum - 1) * limitNum;
 
-    // Get active category IDs first
-    
-      const activeCategories = await Category.find({
-      isActive: true,
-      isDeleted: false,
-    }).distinct("_id");
-    
+    // Aggregation pipeline to include average rating 
+    const designsWithRating = await Design.aggregate([
+      { $match: filter },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "category",
+          foreignField: "_id",
+          as: "category",
+        },
+      },
+      { $unwind: "$category" },
+      {
+        $lookup: {
+          from: "reviews",
+          localField: "_id",
+          foreignField: "design",
+          as: "reviews",
+        },
+      },
+      {
+        $addFields: {
+          avgRating: { $avg: "$reviews.rating" },
+          totalReviews: { $size: "$reviews" },
+        },
+      },
+      {
+        $project: {
+          reviews: 0, // remove review details to reduce response size
+          "category.isDeleted": 0,
+          "category.__v": 0,
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limitNum },
+    ]);
 
-    // Add active category filter to main filter
-    filter.category = { $in: activeCategories };
-
-    // Get total count for pagination (only designs with active categories)
     const totalDesigns = await Design.countDocuments(filter);
     const totalPages = Math.ceil(totalDesigns / limitNum);
-
-    // Fetch designs with filters, pagination, and population
-    const designs = await Design.find(filter)
-      .populate("category", "name description isActive")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limitNum);
 
     res.status(200).json({
       success: true,
       message: "Designs retrieved successfully",
-      data: designs,
+      data: designsWithRating,
       pagination: {
         currentPage: pageNum,
         totalPages,
@@ -240,7 +252,6 @@ const deleteDesign = async (req: Request, res: Response): Promise<void> => {
     });
   }
 };
-
 
 export {
   getAllDesigns,
