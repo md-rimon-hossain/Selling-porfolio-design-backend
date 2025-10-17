@@ -318,7 +318,7 @@ const checkDownloadPermission = async (
   const activeSubscription = await Purchase.findOne({
     user: userId,
     purchaseType: "subscription",
-    status: "active",
+    status: "completed",
     subscriptionEndDate: { $gt: new Date() },
     remainingDownloads: { $gt: 0 },
   });
@@ -452,7 +452,7 @@ export const getUserSubscriptionStatus = async (
     const activeSubscription = await Purchase.findOne({
       user: userId,
       purchaseType: "subscription",
-      status: "active",
+      status: "completed",
       subscriptionEndDate: { $gt: new Date() },
     })
       .populate(

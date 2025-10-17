@@ -48,11 +48,14 @@ export const createReview = async (
       reviewer: req.user?._id,
     });
 
+
+
     if (existingReview) {
       res.status(409).json({
         success: false,
         message: "You have already reviewed this design",
       });
+      return;
     }
 
     const newReview = new Review({

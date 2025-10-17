@@ -119,7 +119,7 @@ export const createPurchase = async (
       const activeSubscription = await Purchase.findOne({
         user: req.user._id,
         purchaseType: "subscription",
-        status: "active",
+        status: "completed",
         subscriptionEndDate: { $gt: new Date() },
       }).populate("pricingPlan", "name duration");
 
@@ -197,7 +197,7 @@ export const createPurchase = async (
       subscriptionEndDate,
       remainingDownloads,
       notes,
-      status: paymentMethod === "free" ? "active" : "pending",
+      status: paymentMethod === "free" ? "completed" : "pending",
       purchaseDate: new Date(),
     });
 
@@ -390,6 +390,7 @@ export const getUserPurchases = async (
         "pricingPlan",
         "name description features duration price finalPrice",
       )
+      .populate("design", "title price images")
       .sort(sort)
       .skip(skip)
       .limit(limitNum)
