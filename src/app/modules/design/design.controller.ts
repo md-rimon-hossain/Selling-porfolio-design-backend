@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Request, Response } from "express";
 import { Design } from "./design.model";
 import { Category } from "../category/category.model";
@@ -15,13 +16,54 @@ const getAllDesigns = async (req: Request, res: Response): Promise<void> => {
       search,
     } = req.query;
 
+  
     const filter: Record<string, unknown> = { isDeleted: false };
 
     if (status) filter.status = status;
-    if (category) filter.category = category;
     if (complexityLevel) filter.complexityLevel = complexityLevel;
 
-    // Price range filter
+    // ✅ CATEGORY HANDLING FIX
+    if (category) {
+      const categoryId = new mongoose.Types.ObjectId(category as string);
+
+      // Check if the category is active and not deleted
+      const categoryExists = await Category.exists({
+        _id: categoryId,
+        isActive: true,
+        isDeleted: false,
+      });
+
+      if (categoryExists) {
+        filter.category = categoryId;
+      } else {
+        // If category is inactive/deleted → return empty result immediately
+         res.status(200).json({
+          success: true,
+          message: "No designs found for this category (inactive or deleted).",
+          data: [],
+          pagination: {
+            currentPage: 1,
+            totalPages: 0,
+            totalItems: 0,
+            itemsPerPage: parseInt(limit as string, 10),
+            hasNextPage: false,
+            hasPrevPage: false,
+          },
+          filters: {
+            category: category || null,
+            complexityLevel: complexityLevel || null,
+            status: status || "Active",
+            priceRange: {
+              min: minPrice ? parseFloat(minPrice as string) : null,
+              max: maxPrice ? parseFloat(maxPrice as string) : null,
+            },
+            search: search || null,
+          },
+        });
+      }
+    }
+
+    // ✅ Price range filter
     if (minPrice !== undefined || maxPrice !== undefined) {
       filter.price = {} as { $gte?: number; $lte?: number };
       if (minPrice !== undefined) {
@@ -36,7 +78,7 @@ const getAllDesigns = async (req: Request, res: Response): Promise<void> => {
       }
     }
 
-    // Search filter
+    // ✅ Search filter
     if (search) {
       filter.$or = [
         { title: { $regex: search, $options: "i" } },
@@ -45,19 +87,12 @@ const getAllDesigns = async (req: Request, res: Response): Promise<void> => {
       ];
     }
 
-    // Active categories only
-    const activeCategories = await Category.find({
-      isActive: true,
-      isDeleted: false,
-    }).distinct("_id");
-    filter.category = { $in: activeCategories };
-
     // Pagination
     const pageNum = parseInt(page as string, 10);
     const limitNum = parseInt(limit as string, 10);
     const skip = (pageNum - 1) * limitNum;
 
-    // Aggregation pipeline to include average rating 
+    // ✅ Aggregation pipeline (unchanged)
     const designsWithRating = await Design.aggregate([
       { $match: filter },
       {
@@ -70,6 +105,12 @@ const getAllDesigns = async (req: Request, res: Response): Promise<void> => {
       },
       { $unwind: "$category" },
       {
+        $match: {
+          "category.isDeleted": false,
+          "category.isActive": true,
+        },
+      },
+      {
         $lookup: {
           from: "reviews",
           localField: "_id",
@@ -79,13 +120,13 @@ const getAllDesigns = async (req: Request, res: Response): Promise<void> => {
       },
       {
         $addFields: {
-          avgRating: { $avg: "$reviews.rating" },
+          avgRating: { $ifNull: [{ $avg: "$reviews.rating" }, 0] },
           totalReviews: { $size: "$reviews" },
         },
       },
       {
         $project: {
-          reviews: 0, // remove review details to reduce response size
+          reviews: 0,
           "category.isDeleted": 0,
           "category.__v": 0,
         },
@@ -95,7 +136,7 @@ const getAllDesigns = async (req: Request, res: Response): Promise<void> => {
       { $limit: limitNum },
     ]);
 
-    const totalDesigns = await Design.countDocuments(filter);
+    const totalDesigns = designsWithRating.length;
     const totalPages = Math.ceil(totalDesigns / limitNum);
 
     res.status(200).json({
@@ -131,6 +172,7 @@ const getAllDesigns = async (req: Request, res: Response): Promise<void> => {
     });
   }
 };
+
 
 const getSingleDesign = async (req: Request, res: Response): Promise<void> => {
   try {
