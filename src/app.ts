@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser())
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://127.0.0.1:3000"], // Specify your frontend URLs
+    origin: ["http://localhost:3000", "http://127.0.0.1:3000","https://selling-porfolio-design-frontend.vercel.app"], // Specify your frontend URLs
     credentials: true, // Allow credentials (cookies, authorization headers, etc.)
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: [
