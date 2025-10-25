@@ -4,7 +4,7 @@ import { Category } from "./category.model";
 // Get all categories (Public)
 const getAllCategories = async (req: Request, res: Response): Promise<void> => {
   try {
-    const categories = await Category.find({ isActive: true });
+    const categories = await Category.find({ isActive: true, isDeleted: false });
 
     res.status(200).json({
       success: true,
@@ -113,7 +113,7 @@ const deleteCategory = async (req: Request, res: Response): Promise<void> => {
   try {
     const category = await Category.findByIdAndUpdate(
       req.params.id,
-      { isDeleted: true },
+      { isDeleted: true, isActive: false },
       { new: true },
     );
 
