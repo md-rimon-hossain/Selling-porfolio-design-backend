@@ -47,8 +47,8 @@ const registerUserController= async (req: Request, res: Response): Promise<void>
     // Set httpOnly cookie
     res.cookie("token", token, {
       httpOnly: true, // cannot be accessed by JS
-      secure: process.env.NODE_ENV === "production", // only HTTPS in prod
-      sameSite: "strict", // protects against CSRF
+      secure: true, // only HTTPS in prod
+      sameSite: "none", // protects against CSRF
       maxAge: 1000 * 60 * 60 * 24, // 1 day
     });
 
@@ -109,8 +109,8 @@ const loginController = async (req: Request, res: Response): Promise<void> => {
     // Set httpOnly cookie
     res.cookie("token", token, {
       httpOnly: true, // cannot be accessed by JS
-      secure: process.env.NODE_ENV === "production", // only HTTPS in prod
-      sameSite: "strict", // protects against CSRF
+      secure: true, // only HTTPS in prod
+      sameSite: "none", // protects against CSRF
       maxAge: 1000 * 60 * 60 * 24, // 1 day
     });
 
@@ -150,8 +150,8 @@ const logoutController = (req: Request, res: Response): void => {
 
   res.clearCookie("token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: true,
+    sameSite: "none",
   }); 
   res.status(200).json({
     success: true,
