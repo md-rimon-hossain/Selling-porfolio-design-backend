@@ -1,0 +1,26 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_routes_1 = __importDefault(require("../modules/auth/auth.routes"));
+const design_routes_1 = __importDefault(require("../modules/design/design.routes"));
+const category_routes_1 = __importDefault(require("../modules/category/category.routes"));
+const pricingPlan_routes_1 = __importDefault(require("../modules/pricingPlan/pricingPlan.routes"));
+const purchase_routes_1 = __importDefault(require("../modules/purchase/purchase.routes"));
+const review_routes_1 = __importDefault(require("../modules/review/review.routes"));
+const download_routes_1 = __importDefault(require("../modules/download/download.routes"));
+const like_routes_1 = __importDefault(require("../modules/like/like.routes"));
+const user_routes_1 = require("../modules/user/user.routes");
+const router = (0, express_1.Router)();
+router.use("/auth", auth_routes_1.default);
+router.use("/users", user_routes_1.userRoutes);
+router.use("/designs", design_routes_1.default);
+router.use("/categories", category_routes_1.default);
+router.use("/pricing-plans", pricingPlan_routes_1.default);
+router.use("/purchases", purchase_routes_1.default);
+router.use("/reviews", review_routes_1.default);
+router.use("/downloads", download_routes_1.default);
+router.use("/likes", like_routes_1.default);
+exports.default = router;
