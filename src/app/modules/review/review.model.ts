@@ -4,7 +4,9 @@ import { Schema, model, Types } from "mongoose";
 export interface IReview {
   _id?: string;
   reviewer: Types.ObjectId;
-  design: Types.ObjectId;
+  design?: Types.ObjectId; // Design being reviewed
+  // 💡 NEW FIELD: Optional course reference for reviews related to courses
+  course?: Types.ObjectId; // 💡 NEW FIELD
   rating: number;
   comment: string;
   createdAt?: Date;
@@ -19,11 +21,8 @@ const reviewSchema = new Schema<IReview>(
       ref: "User",
       required: [true, "Reviewer is required"],
     },
-    design: {
-      type: Schema.Types.ObjectId,
-      ref: "Design",
-      required: [true, "Design is required"],
-    },
+    design: { type: Schema.Types.ObjectId, ref: "Design" }, // 💡 Optional
+    course: { type: Schema.Types.ObjectId, ref: "Course" }, // 💡 NEW FIELD
     rating: {
       type: Number,
       required: [true, "Rating is required"],
@@ -39,11 +38,29 @@ const reviewSchema = new Schema<IReview>(
   {
     timestamps: true,
     versionKey: false,
-  }
+  },
 );
 
-// Prevent duplicate reviews from same user for same design
-reviewSchema.index({ reviewer: 1, design: 1 }, { unique: true });
+// 💡 Validation and Indexes for Design OR Course
+reviewSchema.pre("validate", function (next) {
+  // Ensures exactly one of design or course is provided.
+  if (!!this.design === !!this.course) {
+    return next(
+      new Error("A review must reference exactly one Design or one Course."),
+    );
+  }
+  next();
+});
 
+reviewSchema.index(
+  { reviewer: 1, design: 1 },
+  { unique: true, partialFilterExpression: { design: { $exists: true } } },
+);
+
+// 2. Prevent duplicate reviews from the same user for the same Course (NEW)
+reviewSchema.index(
+  { reviewer: 1, course: 1 },
+  { unique: true, partialFilterExpression: { course: { $exists: true } } },
+);
 // Export the model
 export const Review = model<IReview>("Review", reviewSchema);

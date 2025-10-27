@@ -21,6 +21,11 @@ export const createCategorySchema = z.object({
       .min(10, "Description must be at least 10 characters long")
       .max(200, "Description cannot exceed 200 characters"),
 
+    parentCategory: z
+      .string()
+      .regex(/^[0-9a-fA-F]{24}$/, "Invalid parent category ID format")
+      .optional(),
+
     isActive: z.boolean().default(true),
     isDeleted: z.boolean().default(false),
   }),
