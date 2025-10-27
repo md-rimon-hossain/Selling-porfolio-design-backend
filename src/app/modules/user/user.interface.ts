@@ -3,7 +3,7 @@ export interface IUser {
   name: string;
   email: string;
   password: string;
-  role: "admin" | "customer";
+  role: "super_admin" | "admin" | "customer" | "designer" | "instructor";
   isActive: boolean;
   isDeleted: boolean;
   profileImage?: string;

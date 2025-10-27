@@ -53,7 +53,7 @@ export const registerSchema = z.object({
       }),
 
       role: z
-        .enum(["admin", "customer"], {
+        .enum(["admin", "customer", "super_admin","designer", "instructor"], {
           invalid_type_error: "Role must be either 'admin' or 'customer'",
         })
         .default("customer"),
