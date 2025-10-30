@@ -1,29 +1,28 @@
 import { Schema, model } from "mongoose";
 import type { IDesign, IDownloadableFile } from "./design.interface";
 
-
 // 1. Embedded Schema for Downloadable File Details
-const downloadableFileSchema = new Schema<IDownloadableFile>({
-  public_id: { 
-    type: String, 
-    required: [true, 'Downloadable file Public ID is required'] 
+const downloadableFileSchema = new Schema<IDownloadableFile>(
+  {
+    public_id: {
+      type: String,
+      required: [true, "Downloadable file Public ID is required"],
+    },
+    secure_url: {
+      type: String,
+      required: [true, "Secure URL for the downloadable file is required"],
+    },
+    file_format: {
+      type: String,
+      required: [true, "File format is required"],
+    },
+    file_size: {
+      type: Number,
+      required: [true, "File size in bytes is required"],
+    },
   },
-  secure_url: { 
-    type: String, 
-    required: [true, 'Secure URL for the downloadable file is required'] 
-  },
-  file_format: { 
-    type: String, 
-    required: [true, 'File format is required'] 
-  },
-  file_size: { 
-    type: Number, 
-    required: [true, 'File size in bytes is required'] 
-  },
-}, { _id: false });
-
-
-
+  { _id: false },
+);
 
 const designSchema = new Schema<IDesign>(
   {
@@ -32,7 +31,7 @@ const designSchema = new Schema<IDesign>(
       required: [true, "Design title is required"],
       trim: true,
     },
-    
+
     // Category Hierarchy
     mainCategory: {
       type: Schema.Types.ObjectId,
@@ -44,23 +43,30 @@ const designSchema = new Schema<IDesign>(
       ref: "Category",
       required: [true, "Sub category reference ID is required"],
     },
-    
+
+    designer: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "Designer reference ID is required"],
+    },
+
     // Design Classification
     designType: {
       type: String,
-      enum: ["Logo", "Poster", "UI Kit", "Presentation", "Other"],
+      enum: [
+        "Logo",
+        "Poster",
+        "UI/UX Design",
+        "Presentation",
+        "Print/Packaging",
+        "Illustration/Art",
+        "Social Media Graphic",
+        "Other",
+      ],
       required: [true, "Design type is required"],
       index: true,
     },
 
-    includedFormats: [
-      {
-        type: String,
-        trim: true,
-        uppercase: true,
-      },
-    ],
-    
     // Visuals
     previewImageUrls: [
       {
@@ -75,34 +81,36 @@ const designSchema = new Schema<IDesign>(
       required: [true, "Description is required"],
       trim: true,
     },
-    designer: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: [true, "Designer reference ID is required"],
-    },
-    
-    // Tools & Effects
-    usedTools: [{ type: String, trim: true }],
-    effectsUsed: [{ type: String, trim: true }],
-    
     // Pricing
     basePrice: {
       type: Number,
       required: [true, "Base price is required"],
       min: [0, "Base price cannot be negative"],
     },
-    
+
     discountedPrice: {
       type: Number,
+      required: [true, "Discounted price is required"],
       min: [0, "Discounted price cannot be negative"],
     },
-    
+
+    includedFormats: [
+      {
+        type: String,
+        trim: true,
+        uppercase: true,
+      },
+    ],
+    // Tools & Effects
+    usedTools: [{ type: String, trim: true }],
+    effectsUsed: [{ type: String, trim: true }],
+
     // Downloadable File
     downloadableFile: {
       type: downloadableFileSchema,
       required: [true, "Downloadable file details are required"],
     },
-    
+
     // Metadata
     processDescription: {
       type: String,
@@ -114,11 +122,11 @@ const designSchema = new Schema<IDesign>(
       required: [true, "Complexity level is required"],
     },
     tags: [{ type: String, trim: true }],
-    
+
     // Management & Stats
     status: {
       type: String,
-      enum: ["Active" , "Pending" , "Rejected" , "Inactive"],
+      enum: ["Active", "Pending", "Rejected", "Inactive"],
       default: "Active",
     },
     isDeleted: { type: Boolean, default: false, select: false },

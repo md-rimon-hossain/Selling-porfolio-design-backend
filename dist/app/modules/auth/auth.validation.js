@@ -46,7 +46,7 @@ exports.registerSchema = zod_1.z.object({
             required_error: "Password confirmation is required",
         }),
         role: zod_1.z
-            .enum(["admin", "customer"], {
+            .enum(["admin", "customer", "super_admin", "designer", "instructor"], {
             invalid_type_error: "Role must be either 'admin' or 'customer'",
         })
             .default("customer"),

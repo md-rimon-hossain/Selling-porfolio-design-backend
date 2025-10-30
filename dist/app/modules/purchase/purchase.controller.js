@@ -33,7 +33,7 @@ const createPurchase = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 });
                 return;
             }
-            amount = designDoc.price;
+            amount = designDoc.discountedPrice || 0;
         }
         else if (purchaseType === "subscription") {
             // Subscription purchase
@@ -217,7 +217,6 @@ exports.createPurchase = createPurchase;
 const getAllPurchases = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { page = 1, limit = 10, sortBy = "createdAt", sortOrder = "desc", status, paymentMethod, purchaseType, minAmount, maxAmount, startDate, endDate, search, } = req.query;
-        console.log(req.query);
         const pageNum = parseInt(page, 10);
         const limitNum = parseInt(limit, 10);
         const skip = (pageNum - 1) * limitNum;

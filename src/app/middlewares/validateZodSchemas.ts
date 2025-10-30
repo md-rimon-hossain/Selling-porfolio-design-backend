@@ -52,6 +52,7 @@ export const validateBody = (schema: AnyZodObject | ZodSchema) => {
     next: NextFunction,
   ): Promise<void> => {
     try {
+
       const validatedData = await schema.parse({ body: req.body });
       req.body = validatedData.body;
       next();

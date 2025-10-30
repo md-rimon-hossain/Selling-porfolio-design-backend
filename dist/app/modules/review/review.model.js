@@ -9,11 +9,8 @@ const reviewSchema = new mongoose_1.Schema({
         ref: "User",
         required: [true, "Reviewer is required"],
     },
-    design: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: "Design",
-        required: [true, "Design is required"],
-    },
+    design: { type: mongoose_1.Schema.Types.ObjectId, ref: "Design" }, // 💡 Optional
+    course: { type: mongoose_1.Schema.Types.ObjectId, ref: "Course" }, // 💡 NEW FIELD
     rating: {
         type: Number,
         required: [true, "Rating is required"],
@@ -29,7 +26,16 @@ const reviewSchema = new mongoose_1.Schema({
     timestamps: true,
     versionKey: false,
 });
-// Prevent duplicate reviews from same user for same design
-reviewSchema.index({ reviewer: 1, design: 1 }, { unique: true });
+// 💡 Validation and Indexes for Design OR Course
+reviewSchema.pre("validate", function (next) {
+    // Ensures exactly one of design or course is provided.
+    if (!!this.design === !!this.course) {
+        return next(new Error("A review must reference exactly one Design or one Course."));
+    }
+    next();
+});
+reviewSchema.index({ reviewer: 1, design: 1 }, { unique: true, partialFilterExpression: { design: { $exists: true } } });
+// 2. Prevent duplicate reviews from the same user for the same Course (NEW)
+reviewSchema.index({ reviewer: 1, course: 1 }, { unique: true, partialFilterExpression: { course: { $exists: true } } });
 // Export the model
 exports.Review = (0, mongoose_1.model)("Review", reviewSchema);

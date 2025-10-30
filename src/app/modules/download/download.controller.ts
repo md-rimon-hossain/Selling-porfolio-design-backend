@@ -1,5 +1,8 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import { Types } from "mongoose";
+import https from "https";
+import http from "http";
+import { URL } from "url";
 import { Download } from "./download.model";
 import { Purchase } from "../purchase/purchase.model";
 import { Design } from "../design/design.model";
@@ -178,14 +181,15 @@ export const getAllDownloads = async (
   }
 };
 
-// Download a design
-export const downloadDesign = async (
-  req: AuthRequest,
+// Stream/download the design's downloadable file via server as attachment
+
+export const downloadDesignFile = async (
+  req: Request,
   res: Response,
 ): Promise<void> => {
   try {
     const { designId } = req.params;
-    const userId = req.user?._id;
+    const userId = (req as AuthRequest).user?._id ;
 
     if (!userId) {
       res.status(401).json({
@@ -204,7 +208,7 @@ export const downloadDesign = async (
     }
 
     // Check if design exists
-    const design = await Design.findById(designId);
+    const design = await Design.findById(designId).lean();
     if (!design || design.status !== "Active") {
       res.status(404).json({
         success: false,
@@ -226,6 +230,27 @@ export const downloadDesign = async (
       });
       return;
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const designAny = design as any;
+    const downloadable = designAny.downloadableFile;
+    if (!downloadable || !downloadable.secure_url) {
+      res.status(404).json({
+        success: false,
+        message: "No downloadable file associated with this design",
+      });
+      return;
+    }
+
+    const fileFormat = String(downloadable.file_format ?? "bin");
+    const titleSafe = designAny.title
+      ? String(designAny.title).replace(/[^a-z0-9_.-]/gi, "_")
+      : "download";
+    const filename = `${titleSafe}.${fileFormat}`.replace(/\.+$/, "");
+
+   
+
+    const secureUrl = String(downloadable.secure_url ?? "");
 
     // Record the download
     const download = new Download({
@@ -256,34 +281,76 @@ export const downloadDesign = async (
       );
     }
 
-    // In a real application, you would generate a secure download link
-    // or stream the file directly. For now, we'll return download info
-    const populatedDownload = await Download.findById(download._id)
-      .populate("design", "title previewImageUrl designerName price")
-      .populate("user", "name email");
+    // Always stream the file from Cloudinary to the client
+    if (secureUrl) {
+      const parsed = new URL(secureUrl);
+      const client = parsed.protocol === "https:" ? https : http;
+      client
+        .get(secureUrl, (cloudRes) => {
+          const status = cloudRes.statusCode ?? 0;
+          if (status >= 400) {
+            const chunks: Buffer[] = [];
+            cloudRes.on("data", (c) => chunks.push(Buffer.from(c)));
+            cloudRes.on("end", () => {
+              const body = Buffer.concat(chunks).toString("utf8");
+              // eslint-disable-next-line no-console
+              console.error("Upstream fetch failed", {
+                status,
+                headers: cloudRes.headers,
+                body: body.slice(0, 2000),
+              });
+              if (!res.headersSent) {
+                res.status(502).json({
+                  success: false,
+                  message: `Upstream error when fetching file: ${status}`,
+                  upstream: {
+                    status,
+                    headers: cloudRes.headers,
+                    body: body.slice(0, 2000),
+                  },
+                });
+              }
+            });
+            return;
+          }
 
-    res.status(200).json({
-      success: true,
-      message: "Download initiated successfully",
-      data: {
-        download: populatedDownload,
-        downloadUrl: `/api/v1/files/designs/${designId}`, // Mock download URL
-        expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
-        remainingDownloads:
-          permission.downloadType === "subscription"
-            ? await Purchase.findById(permission.purchaseId).then(
-                (p) => p?.remainingDownloads,
-              )
-            : "Unlimited",
-      },
-    });
-  } catch (error) {
+          res.setHeader(
+            "Content-Type",
+            cloudRes.headers["content-type"] || "application/octet-stream",
+          );
+          if (cloudRes.headers["content-length"])
+            res.setHeader(
+              "Content-Length",
+              cloudRes.headers["content-length"] as string,
+            );
+          res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${filename}"`,
+          );
+          cloudRes.pipe(res);
+        })
+        .on("error", (err) => {
+          // eslint-disable-next-line no-console
+          console.error("Error fetching file from Cloudinary:", err);
+          if (!res.headersSent)
+            res
+              .status(502)
+              .json({ success: false, message: "Failed to fetch file" });
+        });
+      return;
+    }
+
+    res
+      .status(404)
+      .json({ success: false, message: "No downloadable URL available" });
+  } catch (error: unknown) {
     // eslint-disable-next-line no-console
-    console.error("Error downloading design:", error);
+    console.error("Download endpoint error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown";
     res.status(500).json({
       success: false,
-      message: "Internal server error",
-      error: error instanceof Error ? error.message : "Unknown error",
+      message: "Failed to download file",
+      error: errorMessage,
     });
   }
 };

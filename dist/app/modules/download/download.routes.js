@@ -37,5 +37,5 @@ router.get("/my-downloads", auth_1.authenticate, (0, validateZodSchemas_1.valida
  * @desc    Download a design (individual purchase or subscription)
  * @access  Private (Authenticated users)
  */
-router.post("/design/:designId", auth_1.authenticate, (0, validateZodSchemas_1.validateParams)(download_validation_1.downloadDesignSchema), download_controller_1.downloadDesign);
+router.post("/design/:designId", auth_1.authenticate, (0, validateZodSchemas_1.validateParams)(download_validation_1.downloadDesignSchema), download_controller_1.downloadDesignFile);
 exports.default = router;
