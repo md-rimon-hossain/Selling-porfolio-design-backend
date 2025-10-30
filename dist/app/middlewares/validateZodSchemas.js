@@ -48,6 +48,7 @@ const validate = (schema) => {
 const validateBody = (schema) => {
     return (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         try {
+            console.log(req.body);
             const validatedData = yield schema.parse({ body: req.body });
             req.body = validatedData.body;
             next();
@@ -60,7 +61,7 @@ const validateBody = (schema) => {
                 }));
                 res.status(400).json({
                     success: false,
-                    message: "Invalid request body",
+                    message: "Invalid request body from zod ValidateBody",
                     errors: validationErrors,
                 });
                 return;
