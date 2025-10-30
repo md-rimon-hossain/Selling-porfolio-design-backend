@@ -111,9 +111,9 @@ const getUserLikedDesigns = (req, res) => __awaiter(void 0, void 0, void 0, func
         const likes = yield like_model_1.Like.find({ user: userId })
             .populate({
             path: "design",
-            select: "title previewImageUrl price designerName likesCount downloadCount status",
+            select: "title previewImageUrls price designer likesCount downloadCount status",
             populate: {
-                path: "category",
+                path: "parentCategory subCategory designer",
                 select: "name",
             },
         })

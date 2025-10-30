@@ -38,7 +38,7 @@ export const createPurchase = async (
         });
         return;
       }
-      amount = designDoc.price;
+      amount = designDoc.discountedPrice || 0;
     } else if (purchaseType === "subscription") {
       // Subscription purchase
       const plan = await PricingPlan.findById(pricingPlan);
@@ -256,8 +256,6 @@ export const getAllPurchases = async (
       endDate,
       search,
     } = req.query;
-
-    console.log(req.query);
 
     const pageNum = parseInt(page as string, 10);
     const limitNum = parseInt(limit as string, 10);

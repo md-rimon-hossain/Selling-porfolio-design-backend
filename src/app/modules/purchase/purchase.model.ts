@@ -6,18 +6,34 @@ export interface IPurchase {
   user: Types.ObjectId;
   purchaseType: "individual" | "subscription";
   // For individual purchases
-  design?: Types.ObjectId;
+  design?: Types.ObjectId; // 💡 Made optional
+  course?: Types.ObjectId; // 💡 NEW FIELD
 
   // For subscription purchases
   pricingPlan?: Types.ObjectId;
 
   amount: number;
   currency: string;
-  paymentMethod: "credit_card" | "paypal" | "stripe" | "bank_transfer" | "free";
+  paymentMethod:
+    | "credit_card"
+    | "paypal"
+    | "stripe"
+    | "bank_transfer"
+    | "free"
+    | "bkash"
+    | "nagad"
+    | "rocket";
 
+  userProvidedTransactionId?: string;
   paymentDetails?: Record<string, unknown>;
 
-  status: "pending" | "completed" | "expired" | "cancelled" | "refunded";
+  status:
+    | "pending"
+    | "completed"
+    | "expired"
+    | "cancelled"
+    | "refunded"
+    | "verification_required"; // 💡 EXPANDED ENUM
   billingAddress?: {
     street: string;
     city: string;
@@ -34,6 +50,8 @@ export interface IPurchase {
   subscriptionStartDate?: Date;
   subscriptionEndDate?: Date;
   remainingDownloads?: number;
+  itemMaxDownloads?: number;
+  itemDownloadsUsed?: number;
   notes?: string;
   adminNotes?: string;
   cancelReason?: string;
@@ -57,8 +75,17 @@ const purchaseSchema = new Schema<IPurchase>(
     design: {
       type: Schema.Types.ObjectId,
       ref: "Design",
+      // Required only when purchaseType is 'individual' AND no course is provided
       required: function () {
-        return this.purchaseType === "individual";
+        return this.purchaseType === "individual" && !this.course;
+      },
+    },
+    course: {
+      type: Schema.Types.ObjectId,
+      ref: "Course",
+      // Required only when purchaseType is 'individual' AND no design is provided
+      required: function () {
+        return this.purchaseType === "individual" && !this.design;
       },
     },
     pricingPlan: {
@@ -82,7 +109,27 @@ const purchaseSchema = new Schema<IPurchase>(
     paymentMethod: {
       type: String,
       required: [true, "Payment method is required"],
-      enum: ["credit_card", "paypal", "stripe", "bank_transfer", "free"],
+      // 💡 EXPANDED ENUM to include local mobile financial services (MFS)
+      enum: [
+        "credit_card",
+        "paypal",
+        "stripe",
+        "bank_transfer",
+        "free",
+        "bkash",
+        "nagad",
+        "rocket",
+      ],
+    },
+    // 💡 NEW FIELD: Transaction ID provided by the user
+    userProvidedTransactionId: {
+      type: String,
+      trim: true,
+      index: true, // Useful for quickly looking up and verifying payments
+      // Make it required only if the payment method is MFS
+      required: function () {
+        return ["bkash", "nagad", "rocket"].includes(this.paymentMethod);
+      },
     },
     paymentDetails: {
       type: Schema.Types.Mixed,
@@ -131,21 +178,32 @@ const purchaseSchema = new Schema<IPurchase>(
     subscriptionStartDate: {
       type: Date,
       required: function () {
-        return this.purchaseType === "subscription" && this.status === "completed";
+        return (
+          this.purchaseType === "subscription" && this.status === "completed"
+        );
       },
     },
     subscriptionEndDate: {
       type: Date,
       required: function () {
-        return this.purchaseType === "subscription" && this.status === "completed";
+        return (
+          this.purchaseType === "subscription" && this.status === "completed"
+        );
       },
     },
     remainingDownloads: {
       type: Number,
       min: [0, "Remaining downloads cannot be negative"],
       required: function () {
-        return this.purchaseType === "subscription" && this.status === "completed";
+        return (
+          this.purchaseType === "subscription" && this.status === "completed"
+        );
       },
+    },
+    itemDownloadsUsed: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
     notes: {
       type: String,
@@ -165,6 +223,32 @@ const purchaseSchema = new Schema<IPurchase>(
     versionKey: false,
   },
 );
+
+// 💡 Validation Hook
+purchaseSchema.pre("validate", function (next) {
+  const isIndividual = this.purchaseType === "individual";
+  const hasItem = !!this.design || !!this.course;
+
+  // Check for individual purchase: must have exactly one item (Design or Course)
+  if (isIndividual) {
+    if (!!this.design === !!this.course) {
+      return next(
+        new Error(
+          "Individual purchase must reference exactly one Design or one Course.",
+        ),
+      );
+    }
+  }
+  // Check for subscription: must NOT have an item reference
+  else if (this.purchaseType === "subscription" && hasItem) {
+    return next(
+      new Error(
+        "Subscription purchase cannot reference a specific Design or Course.",
+      ),
+    );
+  }
+  next();
+});
 
 // Export the model
 export const Purchase = model<IPurchase>("Purchase", purchaseSchema);

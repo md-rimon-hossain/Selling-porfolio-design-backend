@@ -21,6 +21,13 @@ export const createCategorySchema = z.object({
       .min(10, "Description must be at least 10 characters long")
       .max(200, "Description cannot exceed 200 characters"),
 
+    // parentCategory may be an ObjectId string or explicitly null (for top-level categories)
+    parentCategory: z
+      .string()
+      .regex(/^[0-9a-fA-F]{24}$/, "Invalid parent category ID format")
+      .nullable()
+      .optional(),
+
     isActive: z.boolean().default(true),
     isDeleted: z.boolean().default(false),
   }),
@@ -37,6 +44,12 @@ export const updateCategorySchema = z.object({
         /^[a-zA-Z\s]+$/,
         "Category name can only contain letters and spaces",
       )
+      .optional(),
+    // allow null to explicitly unset the parent (promotes to top-level)
+    parentCategory: z
+      .string()
+      .regex(/^[0-9a-fA-F]{24}$/, "Invalid parent category ID format")
+      .nullable()
       .optional(),
 
     description: z

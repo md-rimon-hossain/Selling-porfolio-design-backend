@@ -126,11 +126,12 @@ export const getUserLikedDesigns = async (
       .populate({
         path: "design",
         select:
-          "title previewImageUrl price designerName likesCount downloadCount status",
+          "title previewImageUrls price designer likesCount downloadCount status",
         populate: {
-          path: "category",
+          path: "parentCategory subCategory designer",
           select: "name",
         },
+        
       })
       .sort({ createdAt: -1 })
       .skip(skip)

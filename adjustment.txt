@@ -1,0 +1,15 @@
+
+
+1. Adding subcategory
+
+2. product - Bkash - Payment
+
+3. Product Page category filter with checkbox
+
+4. Design Details Page image will be show 3 or 4 images
+
+5. base price and discounted price 
+
+6. add design downloadable files
+
+7. 

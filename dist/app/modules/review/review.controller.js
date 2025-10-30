@@ -344,7 +344,7 @@ const updateReview = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             });
         }
         const review = yield review_model_1.Review.findById(id);
-        if (!review) {
+        if (!review || review.design) {
             res.status(404).json({
                 success: false,
                 message: "Review not found",
@@ -364,7 +364,7 @@ const updateReview = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             .populate("design", "title description")
             .populate("reviewer", "name email");
         // Update design average rating if rating was changed
-        if (updateData.rating) {
+        if (updateData.rating && review.design) {
             yield updateDesignRating(review.design);
         }
         res.status(200).json({
@@ -412,7 +412,7 @@ const deleteReview = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             });
             return;
         }
-        const designId = review.design;
+        const designId = review.design && review.design;
         yield review_model_1.Review.findByIdAndDelete(id);
         // Update design average rating after deletion
         yield updateDesignRating(designId);

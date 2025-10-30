@@ -23,7 +23,7 @@ exports.createUserSchema = zod_1.z.object({
             .min(6, "Password must be at least 6 characters long")
             .max(100, "Password cannot exceed 100 characters"),
         role: zod_1.z
-            .enum(["admin", "customer"], {
+            .enum(["super_admin", "admin", "customer", "designer", "instructor"], {
             required_error: "Role is required",
             invalid_type_error: "Role must be either 'admin' or 'customer'",
         })

@@ -53,8 +53,8 @@ const registerUserController = (req, res) => __awaiter(void 0, void 0, void 0, f
         // Set httpOnly cookie
         res.cookie("token", token, {
             httpOnly: true, // cannot be accessed by JS
-            secure: process.env.NODE_ENV === "production", // only HTTPS in prod
-            sameSite: "strict", // protects against CSRF
+            secure: true, // only HTTPS in prod
+            sameSite: "none", // protects against CSRF
             maxAge: 1000 * 60 * 60 * 24, // 1 day
         });
         res.status(201).json({
