@@ -52,7 +52,7 @@ export const validateBody = (schema: AnyZodObject | ZodSchema) => {
     next: NextFunction,
   ): Promise<void> => {
     try {
-
+      console.log(req.body);
       const validatedData = await schema.parse({ body: req.body });
       req.body = validatedData.body;
       next();
@@ -67,7 +67,7 @@ export const validateBody = (schema: AnyZodObject | ZodSchema) => {
 
         res.status(400).json({
           success: false,
-          message: "Invalid request body",
+          message: "Invalid request body from zod ValidateBody",
           errors: validationErrors,
         });
         return;

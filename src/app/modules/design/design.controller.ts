@@ -699,17 +699,51 @@ const createNewDesign = async (
   }
 };
 
-// Update design (Admin only)  (have to work on that later) TODO::: DELETE FROM CLOUDINARY IF FILES UPDATED
+// Update design (Admin only) - handles file uploads and deletions
 const updateDesign = async (req: Request, res: Response): Promise<void> => {
+  // 1. Start a Mongoose Session for Transaction
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  // Track uploaded Cloudinary public IDs so we can cleanup on error
+  const uploadedPublicIds: string[] = [];
+
   try {
-    const existing = await Design.findById(req.params.id).lean();
+    const existing = await Design.findById(req.params.id)
+      .session(session)
+      .lean();
     if (!existing) {
+      await session.abortTransaction();
+      session.endSession();
       res.status(404).json({ success: false, message: "Design not found" });
       return;
     }
 
+    // Parse and coerce form-data values (multipart sends everything as strings)
+    const rawBody = req.body as Record<string, unknown>;
+    const parsedBody: Record<string, unknown> = { ...rawBody };
+
+    // Arrays that might arrive as JSON strings or comma-separated strings
+    const maybeArrayFields = [
+      "includedFormats",
+      "usedTools",
+      "effectsUsed",
+      "tags",
+      "previewImageUrls",
+    ];
+    for (const f of maybeArrayFields) {
+      const parsed = parseArrayField(rawBody[f]);
+      if (parsed !== undefined) parsedBody[f] = parsed;
+    }
+
+    // Numeric fields
+    const maybeNumberFields = ["basePrice", "discountedPrice"];
+    for (const f of maybeNumberFields) {
+      const parsed = parseNumberField(rawBody[f]);
+      if (parsed !== undefined) parsedBody[f] = parsed;
+    }
+
     // If mainCategory/subCategory provided, validate relationship
-    const { mainCategory, subCategory } = req.body as Record<string, unknown>;
+    const { mainCategory, subCategory } = parsedBody as Record<string, unknown>;
     const mainToCheck = mainCategory
       ? String(mainCategory)
       : existing.mainCategory?.toString();
@@ -722,6 +756,8 @@ const updateDesign = async (req: Request, res: Response): Promise<void> => {
         !mongoose.Types.ObjectId.isValid(mainToCheck) ||
         !mongoose.Types.ObjectId.isValid(subToCheck)
       ) {
+        await session.abortTransaction();
+        session.endSession();
         res
           .status(400)
           .json({ success: false, message: "Invalid category id(s)" });
@@ -741,6 +777,8 @@ const updateDesign = async (req: Request, res: Response): Promise<void> => {
       }).lean();
 
       if (!mainCat || !subCat) {
+        await session.abortTransaction();
+        session.endSession();
         res.status(400).json({
           success: false,
           message: "Main category or sub category not found or inactive",
@@ -752,6 +790,8 @@ const updateDesign = async (req: Request, res: Response): Promise<void> => {
         !subCat.parentCategory ||
         subCat.parentCategory.toString() !== mainCat._id.toString()
       ) {
+        await session.abortTransaction();
+        session.endSession();
         res.status(400).json({
           success: false,
           message:
@@ -761,15 +801,228 @@ const updateDesign = async (req: Request, res: Response): Promise<void> => {
       }
     }
 
-    const design = await Design.findByIdAndUpdate(req.params.id, req.body, {
+    // Handle file uploads (if any)
+    type UploadedFile = {
+      buffer: Buffer;
+      mimetype: string;
+      size: number;
+      originalname?: string;
+    };
+    type UploadedFiles = Record<string, UploadedFile[] | undefined> | undefined;
+    const files = (req as unknown as { files?: UploadedFiles }).files;
+    const previewFiles = files?.previewImages || [];
+    const downloadableFiles = files?.files || [];
+
+    // Handle deletion of existing files
+    const { deletePreviewImages, deleteDownloadableFile } =
+      parsedBody as Record<string, unknown>;
+
+    // Delete specific preview images
+    const updatedPreviewUrls = [...(existing.previewImageUrls || [])];
+    if (deletePreviewImages && Array.isArray(deletePreviewImages)) {
+      const urlsToDelete = deletePreviewImages as string[];
+      for (const url of urlsToDelete) {
+        const index = updatedPreviewUrls.indexOf(url);
+        if (index > -1) {
+          updatedPreviewUrls.splice(index, 1);
+          // Delete from Cloudinary
+          try {
+            const urlParts = url.split("/");
+            const publicIdWithExt = urlParts[urlParts.length - 1];
+            const publicId = publicIdWithExt.split(".")[0];
+            await deleteByPublicId(publicId);
+          } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error("Failed to delete preview image:", err);
+          }
+        }
+      }
+    }
+
+    // Delete downloadable file
+    let downloadableFileToSet = existing.downloadableFile;
+    if (deleteDownloadableFile === true) {
+      if (existing.downloadableFile && existing.downloadableFile.public_id) {
+        try {
+          await deleteByPublicId(existing.downloadableFile.public_id);
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.error("Failed to delete downloadable file:", err);
+        }
+      }
+      downloadableFileToSet = undefined as any; // Allow undefined for deletion
+    }
+
+    let downloadableFileObj: Record<string, unknown> | undefined = undefined;
+
+    // If new preview images uploaded, upload them and add to existing
+    if (previewFiles.length > 0) {
+      if (updatedPreviewUrls.length + previewFiles.length > 5) {
+        await session.abortTransaction();
+        session.endSession();
+        res
+          .status(400)
+          .json({ success: false, message: "Max 5 preview images allowed" });
+        return;
+      }
+
+      for (const f of previewFiles) {
+        if (!f.mimetype.startsWith("image/")) {
+          await session.abortTransaction();
+          session.endSession();
+          res
+            .status(400)
+            .json({ success: false, message: "Invalid preview image type" });
+          return;
+        }
+
+        const up = await uploadBufferToCloudinary(
+          f.buffer,
+          `designs/previews`,
+          "image",
+          {
+            originalName: f.originalname,
+            useFilename: true,
+            uniqueFilename: true,
+          },
+        );
+        uploadedPublicIds.push(up.public_id);
+        updatedPreviewUrls.push(up.secure_url);
+      }
+    }
+
+    // If new downloadable file uploaded, upload it and delete old one
+    if (downloadableFiles.length > 0) {
+      if (downloadableFiles.length > 1) {
+        await session.abortTransaction();
+        session.endSession();
+        res.status(400).json({
+          success: false,
+          message: "Only one downloadable file allowed",
+        });
+        return;
+      }
+
+      const allowedMimes = [
+        "application/zip",
+        "application/x-zip-compressed",
+        "application/pdf",
+        "application/octet-stream",
+        "image/vnd.adobe.photoshop",
+      ];
+
+      const primary = downloadableFiles[0];
+      if (primary) {
+        if (primary.size <= 0) {
+          await session.abortTransaction();
+          session.endSession();
+          res
+            .status(400)
+            .json({ success: false, message: "Empty downloadable file" });
+          return;
+        }
+
+        const mimeOK =
+          primary.mimetype.startsWith("image/") ||
+          allowedMimes.includes(primary.mimetype);
+        if (!mimeOK) {
+          await session.abortTransaction();
+          session.endSession();
+          res.status(400).json({
+            success: false,
+            message: "Unsupported downloadable file type",
+          });
+          return;
+        }
+
+        const ext = primary.originalname
+          ? path.extname(primary.originalname).replace(/^[.]/, "").toLowerCase()
+          : undefined;
+        const up = await uploadBufferToCloudinary(
+          primary.buffer,
+          `designs/files`,
+          "raw",
+          {
+            originalName: primary.originalname,
+            useFilename: true,
+            uniqueFilename: true,
+            forceFormat: ext || undefined,
+          },
+        );
+        uploadedPublicIds.push(up.public_id);
+
+        let derivedFormat: string | undefined = undefined;
+        try {
+          if (up.file_format && String(up.file_format).trim()) {
+            derivedFormat = String(up.file_format).trim();
+          }
+        } catch {
+          // ignore
+        }
+
+        if (!derivedFormat && primary.originalname) {
+          const parts = String(primary.originalname).split(".");
+          if (parts.length > 1) derivedFormat = parts.pop()?.toLowerCase();
+        }
+        if (!derivedFormat && primary.mimetype) {
+          const mimetParts = String(primary.mimetype).split("/");
+          derivedFormat = mimetParts[mimetParts.length - 1];
+        }
+        if (!derivedFormat) derivedFormat = "binary";
+
+        const derivedSize = Number.isFinite(Number(up.bytes))
+          ? Number(up.bytes)
+          : primary.size || 0;
+
+        downloadableFileObj = {
+          public_id: up.public_id,
+          secure_url: up.secure_url,
+          file_format: derivedFormat,
+          file_size: derivedSize,
+        };
+
+        // Delete old downloadable file from Cloudinary
+        if (existing.downloadableFile && existing.downloadableFile.public_id) {
+          try {
+            await deleteByPublicId(existing.downloadableFile.public_id);
+          } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error("Failed to delete old downloadable file:", err);
+          }
+        }
+      }
+    }
+
+    // Prepare update data
+    const updateData: Record<string, unknown> = { ...parsedBody };
+    // Remove the delete fields from updateData as they are handled separately
+    delete updateData.deletePreviewImages;
+    delete updateData.deleteDownloadableFile;
+
+    // Set preview images: use updated list (after deletions and additions)
+    updateData.previewImageUrls = updatedPreviewUrls;
+
+    // Set downloadable file: new upload takes precedence, else use the possibly deleted existing
+    if (downloadableFileObj) {
+      updateData.downloadableFile = downloadableFileObj;
+    } else if (downloadableFileToSet !== existing.downloadableFile) {
+      // If it was deleted, set to undefined
+      updateData.downloadableFile = downloadableFileToSet;
+    }
+
+    // Update the design
+    const design = await Design.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
+      session,
     })
       .populate("mainCategory", "name description isActive")
       .populate("subCategory", "name description isActive")
       .populate("designer", "name email");
 
     if (!design) {
+      await session.abortTransaction();
+      session.endSession();
       res.status(404).json({
         success: false,
         message: "Design not found",
@@ -777,21 +1030,51 @@ const updateDesign = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Commit the transaction
+    await session.commitTransaction();
+
     res.status(200).json({
       success: true,
       message: "Design updated successfully",
       data: design,
     });
   } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
+    // Abort the transaction on error
+    await session.abortTransaction();
+
+    // Try cleaning up any uploaded Cloudinary assets
+    if (uploadedPublicIds.length > 0) {
+      try {
+        for (const pid of uploadedPublicIds) {
+          await deleteByPublicId(pid);
+        }
+      } catch {
+        // ignore cleanup errors
+      }
+    }
+
+    let statusCode = 500;
+    let errorMessage = "An unknown error occurred.";
+
+    if (
+      error instanceof mongoose.Error.ValidationError ||
+      error instanceof mongoose.Error.CastError
+    ) {
+      statusCode = 400;
+      errorMessage = (error as Error).message;
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
     // eslint-disable-next-line no-console
     console.error("Design update error:", error);
-    res.status(500).json({
+    res.status(statusCode).json({
       success: false,
       message: "Failed to update design",
       error: errorMessage,
     });
+  } finally {
+    session.endSession();
   }
 };
 

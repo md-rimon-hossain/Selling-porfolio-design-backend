@@ -28,6 +28,17 @@ const parseToNumber = (val: unknown) => {
   return val;
 };
 
+// parse boolean-ish values (e.g. 'true'/'false' strings from form-data)
+const parseToBoolean = (val: unknown) => {
+  if (typeof val === "boolean") return val;
+  if (typeof val === "string") {
+    const v = val.trim().toLowerCase();
+    if (v === "true") return true;
+    if (v === "false") return false;
+  }
+  return val;
+};
+
 // Design creation validation schema
 export const createDesignSchema = z.object({
   body: z.object({
@@ -58,7 +69,6 @@ export const createDesignSchema = z.object({
       .min(10, "Description must be at least 10 characters long")
       .max(1000, "Description cannot exceed 1000 characters"),
 
-    // 💡 ADDITION: Design Type (from Mongoose schema)
     designType: z.enum(
       [
         "Logo",
@@ -137,7 +147,7 @@ export const createDesignSchema = z.object({
         invalid_type_error: "Status must be 'Draft' or 'Pending' on creation",
       })
       .default("Active")
-      .optional(), 
+      .optional(),
 
     // 💡 ADDITION: Included Formats (from Mongoose schema)
     includedFormats: z.preprocess(
@@ -159,6 +169,26 @@ export const updateDesignSchema = z.object({
       .max(100, "Title cannot exceed 100 characters")
       .optional(),
 
+    // 💡 ADDITION: Design Type (from Mongoose schema)
+    designType: z
+      .enum(
+        [
+          "Logo",
+          "Poster",
+          "UI/UX Design",
+          "Presentation",
+          "Print/Packaging",
+          "Illustration/Art",
+          "Social Media Graphic",
+          "Other",
+        ],
+        {
+          required_error: "Design type is required",
+          invalid_type_error: "Invalid design type specified",
+        },
+      )
+      .optional(),
+
     // allow updating mainCategory/subCategory individually but validate in controller
     mainCategory: z
       .string()
@@ -176,24 +206,33 @@ export const updateDesignSchema = z.object({
       .max(1000, "Description cannot exceed 1000 characters")
       .optional(),
 
-    usedTools: z
-      .array(z.string().min(1, "Tool name cannot be empty"))
-      .min(1, "At least one tool must be specified")
-      .max(20, "Cannot exceed 20 tools")
-      .optional(),
+    usedTools: z.preprocess(
+      parseToArray,
+      z
+        .array(z.string().min(1, "Tool name cannot be empty"))
+        .min(1, "At least one tool must be specified")
+        .max(20, "Cannot exceed 20 tools")
+        .optional(),
+    ),
 
-    effectsUsed: z
-      .array(z.string().min(1, "Effect name cannot be empty"))
-      .min(1, "At least one effect must be specified")
-      .max(20, "Cannot exceed 20 effects")
-      .optional(),
+    effectsUsed: z.preprocess(
+      parseToArray,
+      z
+        .array(z.string().min(1, "Effect name cannot be empty"))
+        .min(1, "At least one effect must be specified")
+        .max(20, "Cannot exceed 20 effects")
+        .optional(),
+    ),
 
-    basePrice: z.number().min(0, "Base price cannot be negative").optional(),
+    basePrice: z.preprocess(
+      parseToNumber,
+      z.number().min(0, "Base price cannot be negative").optional(),
+    ),
 
-    discountedPrice: z
-      .number()
-      .min(0, "Discounted price cannot be negative")
-      .optional(),
+    discountedPrice: z.preprocess(
+      parseToNumber,
+      z.number().min(0, "Discounted price cannot be negative").optional(),
+    ),
 
     processDescription: z
       .string()
@@ -208,7 +247,10 @@ export const updateDesignSchema = z.object({
       })
       .optional(),
 
-    tags: z.array(z.string().min(1, "Tag cannot be empty")).optional(),
+    tags: z.preprocess(
+      parseToArray,
+      z.array(z.string().min(1, "Tag cannot be empty")).optional(),
+    ),
 
     status: z
       .enum(
@@ -218,24 +260,30 @@ export const updateDesignSchema = z.object({
         },
       )
       .optional(),
-      
+
     isDeleted: z.boolean().optional(),
 
-    likesCount: z
-      .number()
-      .int("Likes count must be an integer")
-      .min(0, "Likes count cannot be negative")
-      .optional(),
+    // 💡 ADDITION: Included Formats (from Mongoose schema)
+    includedFormats: z.preprocess(
+      parseToArray,
+      z
+        .array(z.string().min(1, "Format cannot be empty"))
+        .min(1, "At least one included format must be specified")
+        .max(10, "Cannot exceed 10 included formats")
+        .optional(),
+    ),
 
-    downloadCount: z
-      .number()
-      .int("Download count must be an integer")
-      .min(0, "Download count cannot be negative")
-      .optional(),
+    // Fields for deleting existing files
+    deletePreviewImages: z.preprocess(
+      parseToArray,
+      z.array(z.string()).optional(), // Array of image URLs to delete
+    ),
+    deleteDownloadableFile: z.preprocess(
+      parseToBoolean,
+      z.boolean().optional(),
+    ), // Whether to delete the downloadable file
   }),
 });
-
-// Design query parameters validation schema
 export const designQuerySchema = z.object({
   query: z.object({
     // Support filtering by mainCategory and/or subCategory (accept ObjectId or slug)
