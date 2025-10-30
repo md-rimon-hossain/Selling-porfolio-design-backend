@@ -17,8 +17,17 @@ const purchaseSchema = new mongoose_1.Schema({
     design: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "Design",
+        // Required only when purchaseType is 'individual' AND no course is provided
         required: function () {
-            return this.purchaseType === "individual";
+            return this.purchaseType === "individual" && !this.course;
+        },
+    },
+    course: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "Course",
+        // Required only when purchaseType is 'individual' AND no design is provided
+        required: function () {
+            return this.purchaseType === "individual" && !this.design;
         },
     },
     pricingPlan: {
@@ -42,7 +51,27 @@ const purchaseSchema = new mongoose_1.Schema({
     paymentMethod: {
         type: String,
         required: [true, "Payment method is required"],
-        enum: ["credit_card", "paypal", "stripe", "bank_transfer", "free"],
+        // 💡 EXPANDED ENUM to include local mobile financial services (MFS)
+        enum: [
+            "credit_card",
+            "paypal",
+            "stripe",
+            "bank_transfer",
+            "free",
+            "bkash",
+            "nagad",
+            "rocket",
+        ],
+    },
+    // 💡 NEW FIELD: Transaction ID provided by the user
+    userProvidedTransactionId: {
+        type: String,
+        trim: true,
+        index: true, // Useful for quickly looking up and verifying payments
+        // Make it required only if the payment method is MFS
+        required: function () {
+            return ["bkash", "nagad", "rocket"].includes(this.paymentMethod);
+        },
     },
     paymentDetails: {
         type: mongoose_1.Schema.Types.Mixed,
@@ -91,21 +120,26 @@ const purchaseSchema = new mongoose_1.Schema({
     subscriptionStartDate: {
         type: Date,
         required: function () {
-            return this.purchaseType === "subscription" && this.status === "completed";
+            return (this.purchaseType === "subscription" && this.status === "completed");
         },
     },
     subscriptionEndDate: {
         type: Date,
         required: function () {
-            return this.purchaseType === "subscription" && this.status === "completed";
+            return (this.purchaseType === "subscription" && this.status === "completed");
         },
     },
     remainingDownloads: {
         type: Number,
         min: [0, "Remaining downloads cannot be negative"],
         required: function () {
-            return this.purchaseType === "subscription" && this.status === "completed";
+            return (this.purchaseType === "subscription" && this.status === "completed");
         },
+    },
+    itemDownloadsUsed: {
+        type: Number,
+        default: 0,
+        min: 0,
     },
     notes: {
         type: String,
@@ -122,6 +156,22 @@ const purchaseSchema = new mongoose_1.Schema({
 }, {
     timestamps: true,
     versionKey: false,
+});
+// 💡 Validation Hook
+purchaseSchema.pre("validate", function (next) {
+    const isIndividual = this.purchaseType === "individual";
+    const hasItem = !!this.design || !!this.course;
+    // Check for individual purchase: must have exactly one item (Design or Course)
+    if (isIndividual) {
+        if (!!this.design === !!this.course) {
+            return next(new Error("Individual purchase must reference exactly one Design or one Course."));
+        }
+    }
+    // Check for subscription: must NOT have an item reference
+    else if (this.purchaseType === "subscription" && hasItem) {
+        return next(new Error("Subscription purchase cannot reference a specific Design or Course."));
+    }
+    next();
 });
 // Export the model
 exports.Purchase = (0, mongoose_1.model)("Purchase", purchaseSchema);

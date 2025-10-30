@@ -18,6 +18,12 @@ exports.createCategorySchema = zod_1.z.object({
         })
             .min(10, "Description must be at least 10 characters long")
             .max(200, "Description cannot exceed 200 characters"),
+        // parentCategory may be an ObjectId string or explicitly null (for top-level categories)
+        parentCategory: zod_1.z
+            .string()
+            .regex(/^[0-9a-fA-F]{24}$/, "Invalid parent category ID format")
+            .nullable()
+            .optional(),
         isActive: zod_1.z.boolean().default(true),
         isDeleted: zod_1.z.boolean().default(false),
     }),
@@ -30,6 +36,12 @@ exports.updateCategorySchema = zod_1.z.object({
             .min(2, "Category name must be at least 2 characters long")
             .max(50, "Category name cannot exceed 50 characters")
             .regex(/^[a-zA-Z\s]+$/, "Category name can only contain letters and spaces")
+            .optional(),
+        // allow null to explicitly unset the parent (promotes to top-level)
+        parentCategory: zod_1.z
+            .string()
+            .regex(/^[0-9a-fA-F]{24}$/, "Invalid parent category ID format")
+            .nullable()
             .optional(),
         description: zod_1.z
             .string()

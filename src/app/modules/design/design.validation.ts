@@ -1,5 +1,33 @@
 import { z } from "zod";
 
+// Helpers to coerce form-data string fields into arrays/numbers when validation runs as middleware
+const parseToArray = (val: unknown) => {
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    const s = val.trim();
+    if (!s) return [];
+    try {
+      const p = JSON.parse(s);
+      if (Array.isArray(p)) return p;
+    } catch {
+      return s
+        .split(",")
+        .map((x) => x.trim())
+        .filter(Boolean);
+    }
+  }
+  return val;
+};
+
+const parseToNumber = (val: unknown) => {
+  if (typeof val === "number") return val;
+  if (typeof val === "string") {
+    const n = Number(val);
+    return Number.isFinite(n) ? n : val;
+  }
+  return val;
+};
+
 // Design creation validation schema
 export const createDesignSchema = z.object({
   body: z.object({
@@ -30,45 +58,60 @@ export const createDesignSchema = z.object({
       .min(10, "Description must be at least 10 characters long")
       .max(1000, "Description cannot exceed 1000 characters"),
 
-    // 💡 ENHANCEMENT: Changed from a single previewImageUrl to an array (as per Mongoose schema)
-    // Made optional because server may produce previewImageUrls from uploaded images
-    previewImageUrls: z
-      .array(z.string().url("Preview image must be a valid URL"))
-      .min(1, "At least one preview image URL is required")
-      .max(5, "Cannot exceed 5 preview images")
-      .optional(), // optional when files are uploaded
-
     // 💡 ADDITION: Design Type (from Mongoose schema)
-    designType: z.enum(["Logo", "Poster", "UI Kit", "Presentation", "Other"], {
-      required_error: "Design type is required",
-      invalid_type_error: "Invalid design type specified",
-    }),
+    designType: z.enum(
+      [
+        "Logo",
+        "Poster",
+        "UI/UX Design",
+        "Presentation",
+        "Print/Packaging",
+        "Illustration/Art",
+        "Social Media Graphic",
+        "Other",
+      ],
+      {
+        required_error: "Design type is required",
+        invalid_type_error: "Invalid design type specified",
+      },
+    ),
 
-    usedTools: z
-      .array(z.string().min(1, "Tool name cannot be empty"))
-      .min(1, "At least one tool must be specified")
-      .max(10, "Cannot exceed 10 tools"), // Reduced limit for realism
+    usedTools: z.preprocess(
+      parseToArray,
+      z
+        .array(z.string().min(1, "Tool name cannot be empty"))
+        .min(1, "At least one tool must be specified")
+        .max(10, "Cannot exceed 10 tools"),
+    ), // Reduced limit for realism
 
     effectsUsed: z
-      .array(z.string().min(1, "Effect name cannot be empty"))
-      .min(0) // Allow 0 effects
-      .max(10, "Cannot exceed 10 effects"), // Reduced limit for realism
+      .preprocess(
+        parseToArray,
+        z
+          .array(z.string().min(1, "Effect name cannot be empty"))
+          .max(10, "Cannot exceed 10 effects"),
+      )
+      .optional(), // Reduced limit for realism
 
     // 💡 CORRECTION: Renamed 'price' to 'basePrice' to match Mongoose schema
-    basePrice: z
-      .number({
-        required_error: "Base Price is required",
-      })
-      .min(0, "Price cannot be negative")
-      .max(10000, "Price cannot exceed $10,000"),
+    basePrice: z.preprocess(
+      parseToNumber,
+      z
+        .number({ required_error: "Base Price is required" })
+        .min(0, "Price cannot be negative")
+        .max(10000, "Price cannot exceed $10,000"),
+    ),
 
     // 💡 ADDITION: discountedPrice (Optional)
-    discountedPrice: z
-      .number()
-      .min(0, "Discounted price cannot be negative")
-      .max(10000, "Discounted price cannot exceed $10,000")
-      .optional()
-      .nullable(),
+    discountedPrice: z.preprocess(
+      parseToNumber,
+      z
+        .number()
+        .min(0, "Discounted price cannot be negative")
+        .max(10000, "Discounted price cannot exceed $10,000")
+        .optional()
+        .nullable(),
+    ),
 
     processDescription: z
       .string({
@@ -81,46 +124,29 @@ export const createDesignSchema = z.object({
       required_error: "Complexity level is required",
     }),
 
-    tags: z
-      .array(z.string().min(1, "Tag cannot be empty"))
-      .min(1, "At least one tag must be specified")
-      .max(10, "Cannot exceed 10 tags"),
+    tags: z.preprocess(
+      parseToArray,
+      z
+        .array(z.string().min(1, "Tag cannot be empty"))
+        .min(1, "At least one tag must be specified")
+        .max(10, "Cannot exceed 10 tags"),
+    ),
 
-    // 💡 ENHANCEMENT: Only allow 'Draft' or 'Pending' status on initial creation
     status: z
-      .enum(["Pending"], {
-        // 'Pending' if ready for admin review, 'Draft' if still working on it.
+      .enum(["Active", "Pending", "Rejected", "Inactive"], {
         invalid_type_error: "Status must be 'Draft' or 'Pending' on creation",
       })
-      .default("Pending")
-      .optional(), // Default is Draft if not provided
-
-    // 💡 ADDITION: Downloadable File details (optional - if uploaded server-side will provide this)
-    downloadableFile: z
-      .object(
-        {
-          public_id: z
-            .string({ required_error: "Public ID is required" })
-            .min(5),
-          secure_url: z
-            .string({ required_error: "Secure URL is required" })
-            .url("Secure URL must be valid"),
-          file_format: z
-            .string({ required_error: "File format is required" })
-            .max(10),
-          file_size: z
-            .number({ required_error: "File size is required" })
-            .min(100, "File size is too small"),
-        },
-        { required_error: "Downloadable file details are required" },
-      )
-      .optional(),
+      .default("Active")
+      .optional(), 
 
     // 💡 ADDITION: Included Formats (from Mongoose schema)
-    includedFormats: z
-      .array(z.string().min(1, "Format cannot be empty"))
-      .min(1, "At least one included format must be specified")
-      .max(10, "Cannot exceed 10 included formats"),
+    includedFormats: z.preprocess(
+      parseToArray,
+      z
+        .array(z.string().min(1, "Format cannot be empty"))
+        .min(1, "At least one included format must be specified")
+        .max(10, "Cannot exceed 10 included formats"),
+    ),
   }),
 });
 
@@ -150,14 +176,6 @@ export const updateDesignSchema = z.object({
       .max(1000, "Description cannot exceed 1000 characters")
       .optional(),
 
-    previewImageUrls: z.array(z.string().url()).optional(),
-
-    designerName: z
-      .string()
-      .min(2, "Designer name must be at least 2 characters long")
-      .max(100, "Designer name cannot exceed 100 characters")
-      .optional(),
-
     usedTools: z
       .array(z.string().min(1, "Tool name cannot be empty"))
       .min(1, "At least one tool must be specified")
@@ -171,6 +189,7 @@ export const updateDesignSchema = z.object({
       .optional(),
 
     basePrice: z.number().min(0, "Base price cannot be negative").optional(),
+
     discountedPrice: z
       .number()
       .min(0, "Discounted price cannot be negative")
@@ -199,6 +218,7 @@ export const updateDesignSchema = z.object({
         },
       )
       .optional(),
+      
     isDeleted: z.boolean().optional(),
 
     likesCount: z
@@ -218,17 +238,45 @@ export const updateDesignSchema = z.object({
 // Design query parameters validation schema
 export const designQuerySchema = z.object({
   query: z.object({
-    // Support filtering by mainCategory and/or subCategory
+    // Support filtering by mainCategory and/or subCategory (accept ObjectId or slug)
     mainCategory: z
       .string()
-      .regex(/^[0-9a-fA-F]{24}$/, "Invalid Main Category ID format")
-      .optional(),
+      .optional()
+      .refine(
+        (v) => {
+          if (v === undefined) return true;
+          const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+          const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+          return objectIdRegex.test(v) || slugRegex.test(v);
+        },
+        {
+          message: "mainCategory must be an ObjectId or a slug",
+        },
+      ),
+
     subCategory: z
       .string()
-      .regex(/^[0-9a-fA-F]{24}$/, "Invalid Sub Category ID format")
-      .optional(),
+      .optional()
+      .refine(
+        (v) => {
+          if (v === undefined) return true;
+          const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+          const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+          return objectIdRegex.test(v) || slugRegex.test(v);
+        },
+        {
+          message: "subCategory must be an ObjectId or a slug",
+        },
+      ),
 
-    complexityLevel: z.enum(["Basic", "Intermediate", "Advanced"]).optional(),
+    // complexityLevel can be single or multi (CSV / repeated params / JSON array)
+    complexityLevel: z.preprocess(
+      parseToArray,
+      z.array(z.enum(["Basic", "Intermediate", "Advanced"])).optional(),
+    ),
+
+    // tags support multi values (CSV, repeated params or JSON array)
+    tags: z.preprocess(parseToArray, z.array(z.string()).optional()),
 
     status: z.enum(["Active", "Draft", "Archived"]).optional(),
 

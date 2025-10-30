@@ -8,9 +8,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDownloadAnalytics = exports.getUserSubscriptionStatus = exports.getUserDownloads = exports.downloadDesign = exports.getAllDownloads = void 0;
+exports.getDownloadAnalytics = exports.getUserSubscriptionStatus = exports.getUserDownloads = exports.downloadDesignFile = exports.getAllDownloads = void 0;
 const mongoose_1 = require("mongoose");
+const https_1 = __importDefault(require("https"));
+const http_1 = __importDefault(require("http"));
+const url_1 = require("url");
 const download_model_1 = require("./download.model");
 const purchase_model_1 = require("../purchase/purchase.model");
 const design_model_1 = require("../design/design.model");
@@ -156,9 +162,9 @@ const getAllDownloads = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.getAllDownloads = getAllDownloads;
-// Download a design
-const downloadDesign = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+// Stream/download the design's downloadable file via server as attachment
+const downloadDesignFile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c;
     try {
         const { designId } = req.params;
         const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
@@ -177,7 +183,7 @@ const downloadDesign = (req, res) => __awaiter(void 0, void 0, void 0, function*
             return;
         }
         // Check if design exists
-        const design = yield design_model_1.Design.findById(designId);
+        const design = yield design_model_1.Design.findById(designId).lean();
         if (!design || design.status !== "Active") {
             res.status(404).json({
                 success: false,
@@ -194,6 +200,22 @@ const downloadDesign = (req, res) => __awaiter(void 0, void 0, void 0, function*
             });
             return;
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const designAny = design;
+        const downloadable = designAny.downloadableFile;
+        if (!downloadable || !downloadable.secure_url) {
+            res.status(404).json({
+                success: false,
+                message: "No downloadable file associated with this design",
+            });
+            return;
+        }
+        const fileFormat = String((_b = downloadable.file_format) !== null && _b !== void 0 ? _b : "bin");
+        const titleSafe = designAny.title
+            ? String(designAny.title).replace(/[^a-z0-9_.-]/gi, "_")
+            : "download";
+        const filename = `${titleSafe}.${fileFormat}`.replace(/\.+$/, "");
+        const secureUrl = String((_c = downloadable.secure_url) !== null && _c !== void 0 ? _c : "");
         // Record the download
         const download = new download_model_1.Download({
             user: userId,
@@ -211,35 +233,71 @@ const downloadDesign = (req, res) => __awaiter(void 0, void 0, void 0, function*
         if (permission.downloadType === "subscription" && permission.purchaseId) {
             yield purchase_model_1.Purchase.findByIdAndUpdate(permission.purchaseId, { $inc: { remainingDownloads: -1 } }, { new: true });
         }
-        // In a real application, you would generate a secure download link
-        // or stream the file directly. For now, we'll return download info
-        const populatedDownload = yield download_model_1.Download.findById(download._id)
-            .populate("design", "title previewImageUrl designerName price")
-            .populate("user", "name email");
-        res.status(200).json({
-            success: true,
-            message: "Download initiated successfully",
-            data: {
-                download: populatedDownload,
-                downloadUrl: `/api/v1/files/designs/${designId}`, // Mock download URL
-                expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
-                remainingDownloads: permission.downloadType === "subscription"
-                    ? yield purchase_model_1.Purchase.findById(permission.purchaseId).then((p) => p === null || p === void 0 ? void 0 : p.remainingDownloads)
-                    : "Unlimited",
-            },
-        });
+        // Always stream the file from Cloudinary to the client
+        if (secureUrl) {
+            const parsed = new url_1.URL(secureUrl);
+            const client = parsed.protocol === "https:" ? https_1.default : http_1.default;
+            client
+                .get(secureUrl, (cloudRes) => {
+                var _a;
+                const status = (_a = cloudRes.statusCode) !== null && _a !== void 0 ? _a : 0;
+                if (status >= 400) {
+                    const chunks = [];
+                    cloudRes.on("data", (c) => chunks.push(Buffer.from(c)));
+                    cloudRes.on("end", () => {
+                        const body = Buffer.concat(chunks).toString("utf8");
+                        // eslint-disable-next-line no-console
+                        console.error("Upstream fetch failed", {
+                            status,
+                            headers: cloudRes.headers,
+                            body: body.slice(0, 2000),
+                        });
+                        if (!res.headersSent) {
+                            res.status(502).json({
+                                success: false,
+                                message: `Upstream error when fetching file: ${status}`,
+                                upstream: {
+                                    status,
+                                    headers: cloudRes.headers,
+                                    body: body.slice(0, 2000),
+                                },
+                            });
+                        }
+                    });
+                    return;
+                }
+                res.setHeader("Content-Type", cloudRes.headers["content-type"] || "application/octet-stream");
+                if (cloudRes.headers["content-length"])
+                    res.setHeader("Content-Length", cloudRes.headers["content-length"]);
+                res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+                cloudRes.pipe(res);
+            })
+                .on("error", (err) => {
+                // eslint-disable-next-line no-console
+                console.error("Error fetching file from Cloudinary:", err);
+                if (!res.headersSent)
+                    res
+                        .status(502)
+                        .json({ success: false, message: "Failed to fetch file" });
+            });
+            return;
+        }
+        res
+            .status(404)
+            .json({ success: false, message: "No downloadable URL available" });
     }
     catch (error) {
         // eslint-disable-next-line no-console
-        console.error("Error downloading design:", error);
+        console.error("Download endpoint error:", error);
+        const errorMessage = error instanceof Error ? error.message : "Unknown";
         res.status(500).json({
             success: false,
-            message: "Internal server error",
-            error: error instanceof Error ? error.message : "Unknown error",
+            message: "Failed to download file",
+            error: errorMessage,
         });
     }
 });
-exports.downloadDesign = downloadDesign;
+exports.downloadDesignFile = downloadDesignFile;
 // Check download permission
 const checkDownloadPermission = (userId, designId) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;

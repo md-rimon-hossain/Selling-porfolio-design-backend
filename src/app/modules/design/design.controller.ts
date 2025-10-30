@@ -4,6 +4,7 @@ import {
   uploadBufferToCloudinary,
   deleteByPublicId,
 } from "../../utils/cloudinary";
+import path from "path";
 import { Design } from "./design.model";
 import { Category } from "../category/category.model";
 
@@ -13,12 +14,45 @@ interface AuthRequest extends Request {
   };
 }
 
+// Helpers to coerce form-data string fields into expected types
+function parseArrayField(val: unknown): string[] | undefined {
+  if (val === undefined || val === null) return undefined;
+  if (Array.isArray(val)) return val.map(String);
+  if (typeof val === "string") {
+    const s = val.trim();
+    if (!s) return undefined;
+    // Try JSON parse first (client may send JSON string)
+    try {
+      const parsed = JSON.parse(s);
+      if (Array.isArray(parsed)) return parsed.map(String);
+    } catch {
+      // fallback: comma separated
+      return s
+        .split(",")
+        .map((x) => x.trim())
+        .filter(Boolean);
+    }
+  }
+  return undefined;
+}
+
+function parseNumberField(val: unknown): number | undefined {
+  if (val === undefined || val === null) return undefined;
+  if (typeof val === "number") return val;
+  if (typeof val === "string") {
+    const n = Number(val);
+    return Number.isFinite(n) ? n : undefined;
+  }
+  return undefined;
+}
+
 const getAllDesigns = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
       mainCategory,
       subCategory,
       complexityLevel,
+      tags,
       status = "Active",
       minPrice,
       maxPrice,
@@ -27,64 +61,119 @@ const getAllDesigns = async (req: Request, res: Response): Promise<void> => {
       search,
     } = req.query;
 
+    // helper: normalize comma-separated or array query params into string[]
+    const toArray = (val: unknown): string[] | undefined => {
+      if (val === undefined || val === null) return undefined;
+      if (Array.isArray(val))
+        return val
+          .map(String)
+          .map((s) => s.trim())
+          .filter(Boolean);
+      if (typeof val === "string")
+        return val
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+      return undefined;
+    };
+
     const filter: Record<string, unknown> = { isDeleted: false };
 
     if (status) filter.status = status;
-    if (complexityLevel) filter.complexityLevel = complexityLevel;
+
+    // complexityLevel can be single or multi (comma-separated or array)
+    const complexityArr = toArray(complexityLevel);
+    if (complexityArr && complexityArr.length > 0)
+      filter.complexityLevel = { $in: complexityArr };
+    else if (complexityLevel) filter.complexityLevel = complexityLevel;
+
+    // tags filter (frontend may send tags=logo,vector or tags[]=logo&tags[]=vector)
+    const tagsArr = toArray(tags);
+    if (tagsArr && tagsArr.length > 0) filter.tags = { $in: tagsArr };
 
     // Validate provided categories (if any) and build filter
     if (mainCategory) {
-      if (!mongoose.Types.ObjectId.isValid(mainCategory as string)) {
-        res
-          .status(400)
-          .json({ success: false, message: "Invalid mainCategory ID" });
-        return;
-      }
-
-      const mainExists = await Category.exists({
-        _id: new mongoose.Types.ObjectId(mainCategory as string),
-        isActive: true,
-        isDeleted: false,
-      });
-
-      if (!mainExists) {
-        res.status(400).json({
-          success: false,
-          message: "Main category not found or inactive",
+      const mc = String(mainCategory);
+      // If value is an ObjectId, use it. Otherwise treat as slug and resolve to id.
+      if (mongoose.Types.ObjectId.isValid(mc)) {
+        const mainExists = await Category.exists({
+          _id: new mongoose.Types.ObjectId(mc),
+          isActive: true,
+          isDeleted: false,
         });
-        return;
+        if (!mainExists) {
+          res.status(400).json({
+            success: false,
+            message: "Main category not found or inactive",
+          });
+          return;
+        }
+        filter.mainCategory = new mongoose.Types.ObjectId(mc);
+      } else {
+        // treat as slug
+        const mainDoc = await Category.findOne({
+          slug: mc,
+          isActive: true,
+          isDeleted: false,
+        }).lean();
+        if (!mainDoc) {
+          res.status(400).json({
+            success: false,
+            message: "Main category (slug) not found or inactive",
+          });
+          return;
+        }
+        filter.mainCategory = mainDoc._id;
       }
-
-      filter.mainCategory = new mongoose.Types.ObjectId(mainCategory as string);
     }
 
     if (subCategory) {
-      if (!mongoose.Types.ObjectId.isValid(subCategory as string)) {
-        res
-          .status(400)
-          .json({ success: false, message: "Invalid subCategory ID" });
-        return;
-      }
-
-      const subDoc = await Category.findOne({
-        _id: new mongoose.Types.ObjectId(subCategory as string),
-        isActive: true,
-        isDeleted: false,
-      }).lean();
-
-      if (!subDoc) {
-        res.status(400).json({
-          success: false,
-          message: "Sub category not found or inactive",
-        });
-        return;
+      const sc = String(subCategory);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let subDoc: any = null;
+      if (mongoose.Types.ObjectId.isValid(sc)) {
+        subDoc = await Category.findOne({
+          _id: new mongoose.Types.ObjectId(sc),
+          isActive: true,
+          isDeleted: false,
+        }).lean();
+        if (!subDoc) {
+          res.status(400).json({
+            success: false,
+            message: "Sub category not found or inactive",
+          });
+          return;
+        }
+      } else {
+        // treat as slug
+        subDoc = await Category.findOne({
+          slug: sc,
+          isActive: true,
+          isDeleted: false,
+        }).lean();
+        if (!subDoc) {
+          res.status(400).json({
+            success: false,
+            message: "Sub category (slug) not found or inactive",
+          });
+          return;
+        }
       }
 
       // If mainCategory provided, ensure relationship
       if (mainCategory) {
-        const mainId = (mainCategory as string).toString();
+        // resolve mainCategory id if it was a slug
+        let mainIdToCompare = String(mainCategory);
+        if (!mongoose.Types.ObjectId.isValid(mainIdToCompare)) {
+          const mainDoc = await Category.findOne({
+            slug: mainIdToCompare,
+            isActive: true,
+            isDeleted: false,
+          }).lean();
+          mainIdToCompare = mainDoc?._id?.toString() ?? mainIdToCompare;
+        }
         const parentId = subDoc.parentCategory?.toString();
-        if (!parentId || parentId !== mainId) {
+        if (!parentId || parentId !== mainIdToCompare) {
           res.status(400).json({
             success: false,
             message:
@@ -94,18 +183,18 @@ const getAllDesigns = async (req: Request, res: Response): Promise<void> => {
         }
       }
 
-      filter.subCategory = new mongoose.Types.ObjectId(subCategory as string);
+      filter.subCategory = subDoc._id;
     }
 
     // Price range filter mapped to basePrice
     if (minPrice !== undefined || maxPrice !== undefined) {
-      filter.basePrice = {} as { $gte?: number; $lte?: number };
+      filter.discountedPrice = {} as { $gte?: number; $lte?: number };
       if (minPrice !== undefined) {
-        (filter.basePrice as { $gte?: number; $lte?: number }).$gte =
+        (filter.discountedPrice as { $gte?: number; $lte?: number }).$gte =
           parseFloat(minPrice as string);
       }
       if (maxPrice !== undefined) {
-        (filter.basePrice as { $gte?: number; $lte?: number }).$lte =
+        (filter.discountedPrice as { $gte?: number; $lte?: number }).$lte =
           parseFloat(maxPrice as string);
       }
     }
@@ -157,6 +246,16 @@ const getAllDesigns = async (req: Request, res: Response): Promise<void> => {
           "subCategory.isActive": true,
         },
       },
+      // ✅ Populate designer (User)
+      {
+        $lookup: {
+          from: "users",
+          localField: "designer",
+          foreignField: "_id",
+          as: "designer",
+        },
+      },
+      { $unwind: { path: "$designer", preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
           from: "reviews",
@@ -222,10 +321,9 @@ const getAllDesigns = async (req: Request, res: Response): Promise<void> => {
 
 const getSingleDesign = async (req: Request, res: Response): Promise<void> => {
   try {
-    const design = await Design.findById(req.params.id).populate(
-      "mainCategory subCategory designer",
-      "name description",
-    );
+    const design = await Design.findById(req.params.id)
+      .populate("mainCategory subCategory designer", "name description")
+      .select("-isDeleted -downloadableFile.secure_url");
 
     if (!design) {
       res.status(404).json({
@@ -273,7 +371,31 @@ const createNewDesign = async (
 
   try {
     // Validate mainCategory/subCategory relationship before creating
-    const { mainCategory, subCategory } = req.body as Record<string, unknown>;
+    // Parse and coerce form-data values (multipart sends everything as strings)
+    const rawBody = req.body as Record<string, unknown>;
+    const parsedBody: Record<string, unknown> = { ...rawBody };
+
+    // Arrays that might arrive as JSON strings or comma-separated strings
+    const maybeArrayFields = [
+      "includedFormats",
+      "usedTools",
+      "effectsUsed",
+      "tags",
+      "previewImageUrls",
+    ];
+    for (const f of maybeArrayFields) {
+      const parsed = parseArrayField(rawBody[f]);
+      if (parsed !== undefined) parsedBody[f] = parsed;
+    }
+
+    // Numeric fields
+    const maybeNumberFields = ["basePrice", "discountedPrice"];
+    for (const f of maybeNumberFields) {
+      const parsed = parseNumberField(rawBody[f]);
+      if (parsed !== undefined) parsedBody[f] = parsed;
+    }
+
+    const { mainCategory, subCategory } = parsedBody as Record<string, unknown>;
 
     if (!mainCategory || !subCategory) {
       await session.abortTransaction();
@@ -371,7 +493,19 @@ const createNewDesign = async (
           return;
         }
 
-        const up = await uploadBufferToCloudinary(f.buffer, `designs/previews`);
+        const up = await uploadBufferToCloudinary(
+          f.buffer,
+          `designs/previews`,
+          "image",
+          {
+            originalName: f.originalname,
+            useFilename: true,
+            uniqueFilename: true,
+          },
+        );
+        // Debug log
+        // eslint-disable-next-line no-console
+        console.debug("Cloudinary preview upload:", up);
         uploadedPublicIds.push(up.public_id);
         previewImageUrls.push(up.secure_url);
       }
@@ -383,12 +517,10 @@ const createNewDesign = async (
       if (downloadableFiles.length > 5) {
         await session.abortTransaction();
         session.endSession();
-        res
-          .status(400)
-          .json({
-            success: false,
-            message: "Max 5 downloadable files allowed",
-          });
+        res.status(400).json({
+          success: false,
+          message: "Max 5 downloadable files allowed",
+        });
         return;
       }
 
@@ -419,31 +551,72 @@ const createNewDesign = async (
         if (!mimeOK) {
           await session.abortTransaction();
           session.endSession();
-          res
-            .status(400)
-            .json({
-              success: false,
-              message: "Unsupported downloadable file type",
-            });
+          res.status(400).json({
+            success: false,
+            message: "Unsupported downloadable file type",
+          });
           return;
         }
 
+        // try to hint Cloudinary to use original filename so format is inferred
+        const ext = primary.originalname
+          ? path.extname(primary.originalname).replace(/^[.]/, "").toLowerCase()
+          : undefined;
         const up = await uploadBufferToCloudinary(
           primary.buffer,
           `designs/files`,
+          "raw",
+          {
+            originalName: primary.originalname,
+            useFilename: true,
+            uniqueFilename: true,
+            forceFormat: ext || undefined,
+          },
         );
+        // Debug log
+        // eslint-disable-next-line no-console
+        console.debug("Cloudinary downloadable upload:", up);
+
         uploadedPublicIds.push(up.public_id);
+
+        // Derive a file_format if Cloudinary returned empty
+        let derivedFormat: string | undefined = undefined;
+        try {
+          if (up.file_format && String(up.file_format).trim()) {
+            derivedFormat = String(up.file_format).trim();
+          }
+        } catch {
+          // ignore
+        }
+
+        if (!derivedFormat && primary.originalname) {
+          const parts = String(primary.originalname).split(".");
+          if (parts.length > 1) derivedFormat = parts.pop()?.toLowerCase();
+        }
+        if (!derivedFormat && primary.mimetype) {
+          const mimetParts = String(primary.mimetype).split("/");
+          derivedFormat = mimetParts[mimetParts.length - 1];
+        }
+        if (!derivedFormat) derivedFormat = "binary";
+
+        const derivedSize = Number.isFinite(Number(up.bytes))
+          ? Number(up.bytes)
+          : primary.size || 0;
+
         downloadableFileObj = {
           public_id: up.public_id,
           secure_url: up.secure_url,
-          file_format: up.file_format,
-          file_size: up.bytes,
+          file_format: derivedFormat,
+          file_size: derivedSize,
         };
+        // Debug
+        // eslint-disable-next-line no-console
+        console.debug("Derived downloadableFileObj:", downloadableFileObj);
       }
     }
 
     const designData: Record<string, unknown> = {
-      ...req.body,
+      ...parsedBody,
       // Assign the designer ID from the authenticated user
       designer: req.user.id,
     };
@@ -526,7 +699,7 @@ const createNewDesign = async (
   }
 };
 
-// Update design (Admin only)
+// Update design (Admin only)  (have to work on that later) TODO::: DELETE FROM CLOUDINARY IF FILES UPDATED
 const updateDesign = async (req: Request, res: Response): Promise<void> => {
   try {
     const existing = await Design.findById(req.params.id).lean();
@@ -560,6 +733,7 @@ const updateDesign = async (req: Request, res: Response): Promise<void> => {
         isActive: true,
         isDeleted: false,
       }).lean();
+
       const subCat = await Category.findOne({
         _id: subToCheck,
         isActive: true,
@@ -621,7 +795,7 @@ const updateDesign = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// Delete design (Admin only)
+// Delete design (Admin only)  (soft delete by setting isDeleted flag ALSO HAVE TO WORK ON THAT LATER) TODO::: DELETE FROM CLOUDINARY TOO
 const deleteDesign = async (req: Request, res: Response): Promise<void> => {
   try {
     const design = await Design.findByIdAndUpdate(

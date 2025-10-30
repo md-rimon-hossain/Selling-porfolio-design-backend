@@ -420,7 +420,7 @@ export const updateReview = async (
     }
 
     const review = await Review.findById(id);
-    if (!review) {
+    if (!review || review.design) {
       res.status(404).json({
         success: false,
         message: "Review not found",
@@ -449,7 +449,7 @@ export const updateReview = async (
       .populate("reviewer", "name email");
 
     // Update design average rating if rating was changed
-    if (updateData.rating) {
+    if (updateData.rating && review.design) {
       await updateDesignRating(review.design);
     }
 
@@ -505,11 +505,11 @@ export const deleteReview = async (
       return;
     }
 
-    const designId = review.design;
+    const designId = review.design && review.design;
     await Review.findByIdAndDelete(id);
 
     // Update design average rating after deletion
-    await updateDesignRating(designId);
+    await updateDesignRating(designId as Types.ObjectId);
 
     res.status(200).json({
       success: true,

@@ -23,6 +23,7 @@ export interface IPurchase {
     | "bkash"
     | "nagad"
     | "rocket";
+
   userProvidedTransactionId?: string;
   paymentDetails?: Record<string, unknown>;
 
@@ -74,15 +75,17 @@ const purchaseSchema = new Schema<IPurchase>(
     design: {
       type: Schema.Types.ObjectId,
       ref: "Design",
+      // Required only when purchaseType is 'individual' AND no course is provided
       required: function () {
-        return this.purchaseType === "individual";
+        return this.purchaseType === "individual" && !this.course;
       },
     },
     course: {
       type: Schema.Types.ObjectId,
       ref: "Course",
+      // Required only when purchaseType is 'individual' AND no design is provided
       required: function () {
-        return this.purchaseType === "individual";
+        return this.purchaseType === "individual" && !this.design;
       },
     },
     pricingPlan: {
@@ -107,7 +110,16 @@ const purchaseSchema = new Schema<IPurchase>(
       type: String,
       required: [true, "Payment method is required"],
       // 💡 EXPANDED ENUM to include local mobile financial services (MFS)
-      enum: ["credit_card", "paypal", "stripe", "bank_transfer", "free", "bkash", "nagad", "rocket"], 
+      enum: [
+        "credit_card",
+        "paypal",
+        "stripe",
+        "bank_transfer",
+        "free",
+        "bkash",
+        "nagad",
+        "rocket",
+      ],
     },
     // 💡 NEW FIELD: Transaction ID provided by the user
     userProvidedTransactionId: {
@@ -186,14 +198,6 @@ const purchaseSchema = new Schema<IPurchase>(
         return (
           this.purchaseType === "subscription" && this.status === "completed"
         );
-      },
-    },
-    itemMaxDownloads: {
-      type: Number,
-      min: [1, "Max downloads must be at least 1"],
-      required: function () {
-        // Only required if purchasing an individual design
-        return this.purchaseType === "individual" && !!this.design;
       },
     },
     itemDownloadsUsed: {

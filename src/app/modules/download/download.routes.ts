@@ -14,7 +14,7 @@ import {
 
 import {
   getAllDownloads,
-  downloadDesign,
+  downloadDesignFile,
   getUserDownloads,
   getUserSubscriptionStatus,
   getDownloadAnalytics,
@@ -78,7 +78,7 @@ router.post(
   "/design/:designId",
   authenticate,
   validateParams(downloadDesignSchema),
-  downloadDesign,
+  downloadDesignFile,
 );
 
 export default router;
