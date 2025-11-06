@@ -37,6 +37,22 @@ router.get(
  * ADMIN ONLY ROUTES
  */
 
+// Get all payments with filters (admin only)
+router.get(
+  "/admin/all",
+  authenticate,
+  authorize("admin"),
+  PaymentController.getAllPaymentsController,
+);
+
+// Get payment statistics and analytics (admin only)
+router.get(
+  "/admin/statistics",
+  authenticate,
+  authorize("admin"),
+  PaymentController.getPaymentStatisticsController,
+);
+
 // Process refund (admin only)
 router.post(
   "/refund",
