@@ -7,6 +7,8 @@ export interface IPricingPlan {
   description?: string;
   price: number;
   finalPrice?: number;
+  currencyCode: string;
+  currencyDisplay: string;
   features: string[];
   duration: string;
   maxDesigns?: number;
@@ -41,6 +43,19 @@ const pricingPlanSchema = new Schema<IPricingPlan>(
     finalPrice: {
       type: Number,
       min: [0, "Final price cannot be negative"],
+    },
+    currencyCode: {
+      type: String,
+      required: [true, "Currency code is required"],
+      uppercase: true,
+      trim: true,
+      default: "usd",
+    },
+    currencyDisplay: {
+      type: String,
+      required: [true, "Currency display string is required"],
+      trim: true,
+      default: "$", // Common display symbol for usd (e.g., '$' is another option)
     },
     features: [
       {

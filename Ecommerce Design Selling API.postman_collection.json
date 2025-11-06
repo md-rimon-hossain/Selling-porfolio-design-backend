@@ -2036,6 +2036,618 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "💳 Payments (Stripe Integration)",
+      "item": [
+        {
+          "name": "Create Payment Intent for Design",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const responseData = pm.response.json();",
+                  "    if (responseData.data && responseData.data.paymentIntentId) {",
+                  "        pm.environment.set('payment_intent_id', responseData.data.paymentIntentId);",
+                  "        pm.environment.set('client_secret', responseData.data.clientSecret);",
+                  "        console.log('Payment Intent ID saved:', responseData.data.paymentIntentId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "token": "{{customer_token}}"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productType\": \"design\",\n  \"productId\": \"{{design_id}}\",\n  \"currency\": \"usd\"\n}"
+            },
+            "url": "{{base_url}}/payments/create",
+            "description": "Create a payment intent for a design purchase. Returns clientSecret for frontend Stripe integration."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Payment Intent for Course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const responseData = pm.response.json();",
+                  "    if (responseData.data && responseData.data.paymentIntentId) {",
+                  "        pm.environment.set('course_payment_intent_id', responseData.data.paymentIntentId);",
+                  "        console.log('Course Payment Intent ID saved:', responseData.data.paymentIntentId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "token": "{{customer_token}}"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productType\": \"course\",\n  \"productId\": \"{{course_id}}\",\n  \"currency\": \"usd\"\n}"
+            },
+            "url": "{{base_url}}/payments/create",
+            "description": "Create a payment intent for a course purchase"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Payment Intent for Subscription",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const responseData = pm.response.json();",
+                  "    if (responseData.data && responseData.data.paymentIntentId) {",
+                  "        pm.environment.set('subscription_payment_intent_id', responseData.data.paymentIntentId);",
+                  "        console.log('Subscription Payment Intent ID saved:', responseData.data.paymentIntentId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "token": "{{customer_token}}"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productType\": \"subscription\",\n  \"productId\": \"{{pricing_plan_id}}\",\n  \"currency\": \"usd\"\n}"
+            },
+            "url": "{{base_url}}/payments/create",
+            "description": "Create a payment intent for a subscription purchase"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payment Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "token": "{{customer_token}}"
+              }
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/payments/status/{{payment_intent_id}}",
+            "description": "Get payment status by payment intent ID. Shows payment details and linked purchase if completed."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Payments",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "token": "{{customer_token}}"
+              }
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/payments/my-payments",
+            "description": "Get authenticated user's payment history with product details"
+          },
+          "response": []
+        },
+        {
+          "name": "Refund Payment (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "token": "{{admin_token}}"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentIntentId\": \"{{payment_intent_id}}\",\n  \"reason\": \"Customer requested refund - not satisfied with product\"\n}"
+            },
+            "url": "{{base_url}}/payments/refund",
+            "description": "Process a refund for a payment (Admin only). Updates both Payment and Purchase records."
+          },
+          "response": []
+        },
+        {
+          "name": "Partial Refund Payment (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "token": "{{admin_token}}"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentIntentId\": \"{{payment_intent_id}}\",\n  \"amount\": 2500,\n  \"reason\": \"Partial refund - promotional compensation\"\n}"
+            },
+            "url": "{{base_url}}/payments/refund",
+            "description": "Process a partial refund (amount in cents). If amount is not specified, full refund is processed."
+          },
+          "response": []
+        },
+        {
+          "name": "Webhook Handler (Test - Stripe Simulation)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "stripe-signature",
+                "value": "test_signature_from_stripe_cli",
+                "description": "In real scenario, this is generated by Stripe"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"evt_test_webhook\",\n  \"object\": \"event\",\n  \"type\": \"payment_intent.succeeded\",\n  \"data\": {\n    \"object\": {\n      \"id\": \"{{payment_intent_id}}\",\n      \"object\": \"payment_intent\",\n      \"amount\": 2999,\n      \"currency\": \"usd\",\n      \"status\": \"succeeded\"\n    }\n  }\n}"
+            },
+            "url": "{{base_url}}/payments/webhook",
+            "description": "⚠️ This endpoint is for Stripe webhooks only. In production, only Stripe can call this endpoint. Use Stripe CLI for local testing: `stripe trigger payment_intent.succeeded`"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Create Payment Without Authentication",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productType\": \"design\",\n  \"productId\": \"{{design_id}}\",\n  \"currency\": \"usd\"\n}"
+            },
+            "url": "{{base_url}}/payments/create",
+            "description": "Test authentication requirement - should fail without token"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Create Payment with Invalid Product Type",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "token": "{{customer_token}}"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productType\": \"invalid_type\",\n  \"productId\": \"{{design_id}}\",\n  \"currency\": \"usd\"\n}"
+            },
+            "url": "{{base_url}}/payments/create",
+            "description": "Test validation - invalid product type should fail"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Create Payment with Invalid Product ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "token": "{{customer_token}}"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productType\": \"design\",\n  \"productId\": \"invalid_object_id\",\n  \"currency\": \"usd\"\n}"
+            },
+            "url": "{{base_url}}/payments/create",
+            "description": "Test validation - invalid ObjectId should fail"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Create Payment for Non-existent Product",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "token": "{{customer_token}}"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productType\": \"design\",\n  \"productId\": \"507f1f77bcf86cd799439011\",\n  \"currency\": \"usd\"\n}"
+            },
+            "url": "{{base_url}}/payments/create",
+            "description": "Test with valid ObjectId format but non-existent product - should fail"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Get Payment Status - Unauthorized",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "token": "{{admin_token}}"
+              }
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/payments/status/{{payment_intent_id}}",
+            "description": "Test authorization - user trying to view another user's payment (only admin or payment owner can view)"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Refund as Customer (Should Fail)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "token": "{{customer_token}}"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentIntentId\": \"{{payment_intent_id}}\",\n  \"reason\": \"Customer trying to refund\"\n}"
+            },
+            "url": "{{base_url}}/payments/refund",
+            "description": "Test authorization - only admin can process refunds"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Refund with Invalid Payment Intent ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": {
+                "token": "{{admin_token}}"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentIntentId\": \"pi_invalid_id_12345\",\n  \"reason\": \"Test refund\"\n}"
+            },
+            "url": "{{base_url}}/payments/refund",
+            "description": "Test with invalid payment intent ID - should fail"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🧪 Payment Flow Testing",
+      "item": [
+        {
+          "name": "1️⃣ Complete Flow: Design Purchase",
+          "item": [
+            {
+              "name": "Step 1: Create Payment Intent",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Payment intent created', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "    const responseData = pm.response.json();",
+                      "    pm.expect(responseData.success).to.be.true;",
+                      "    pm.expect(responseData.data).to.have.property('paymentIntentId');",
+                      "    pm.expect(responseData.data).to.have.property('clientSecret');",
+                      "    ",
+                      "    // Save for next steps",
+                      "    pm.environment.set('test_payment_intent_id', responseData.data.paymentIntentId);",
+                      "    console.log('✅ Step 1: Payment Intent Created -', responseData.data.paymentIntentId);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": {
+                    "token": "{{customer_token}}"
+                  }
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"productType\": \"design\",\n  \"productId\": \"{{design_id}}\",\n  \"currency\": \"usd\"\n}"
+                },
+                "url": "{{base_url}}/payments/create"
+              },
+              "response": []
+            },
+            {
+              "name": "Step 2: Check Payment Status (Pending)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Payment status is pending', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "    const responseData = pm.response.json();",
+                      "    pm.expect(responseData.data.status).to.eql('pending');",
+                      "    console.log('✅ Step 2: Payment Status -', responseData.data.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": {
+                    "token": "{{customer_token}}"
+                  }
+                },
+                "method": "GET",
+                "header": [],
+                "url": "{{base_url}}/payments/status/{{test_payment_intent_id}}"
+              },
+              "response": []
+            },
+            {
+              "name": "Step 3: Simulate Webhook (Payment Success)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Webhook processed successfully', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "    console.log('✅ Step 3: Webhook Received');",
+                      "    console.log('⚠️ NOTE: In local development, use Stripe CLI:');",
+                      "    console.log('   stripe trigger payment_intent.succeeded');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"id\": \"evt_test\",\n  \"type\": \"payment_intent.succeeded\",\n  \"data\": {\n    \"object\": {\n      \"id\": \"{{test_payment_intent_id}}\"\n    }\n  }\n}"
+                },
+                "url": "{{base_url}}/payments/webhook",
+                "description": "⚠️ In production, use: stripe listen --forward-to localhost:5000/api/payments/webhook"
+              },
+              "response": []
+            },
+            {
+              "name": "Step 4: Verify Payment Succeeded",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Payment succeeded and purchase created', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "    const responseData = pm.response.json();",
+                      "    pm.expect(responseData.data.status).to.eql('succeeded');",
+                      "    pm.expect(responseData.data).to.have.property('purchaseId');",
+                      "    console.log('✅ Step 4: Payment Succeeded');",
+                      "    console.log('✅ Purchase ID:', responseData.data.purchaseId);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": {
+                    "token": "{{customer_token}}"
+                  }
+                },
+                "method": "GET",
+                "header": [],
+                "url": "{{base_url}}/payments/status/{{test_payment_intent_id}}"
+              },
+              "response": []
+            },
+            {
+              "name": "Step 5: Verify Download Access",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('User can download the design', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "    console.log('✅ Step 5: Download Access Granted');",
+                      "    console.log('🎉 COMPLETE FLOW TEST PASSED!');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": {
+                    "token": "{{customer_token}}"
+                  }
+                },
+                "method": "POST",
+                "header": [],
+                "url": "{{base_url}}/downloads/design/{{design_id}}"
+              },
+              "response": []
+            }
+          ],
+          "description": "Complete end-to-end payment flow test: Create payment → Check status → Webhook → Verify purchase → Download"
+        },
+        {
+          "name": "2️⃣ Stripe CLI Testing Guide",
+          "item": [
+            {
+              "name": "README - How to Test Webhooks",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payments/webhook",
+                  "host": ["{{base_url}}"],
+                  "path": ["payments", "webhook"]
+                },
+                "description": "# 🧪 Testing Payment Webhooks with Stripe CLI\n\n## Prerequisites\n✅ Stripe CLI installed and authenticated\n✅ Webhook listener running\n✅ Development server running on localhost:5000\n\n## Steps to Test:\n\n### 1. Start Webhook Listener\n```powershell\nstripe listen --forward-to http://localhost:5000/api/payments/webhook\n```\n\n### 2. Copy Webhook Secret\nThe CLI will output something like:\n```\n> Ready! Your webhook signing secret is whsec_xxxxx\n```\nAdd this to your `.env` file:\n```\nSTRIPE_WEBHOOK_SECRET=whsec_xxxxx\n```\n\n### 3. Restart Your Server\nThe server needs to restart to load the new webhook secret.\n\n### 4. Test Webhook Events\n\n**Successful Payment:**\n```powershell\nstripe trigger payment_intent.succeeded\n```\n\n**Failed Payment:**\n```powershell\nstripe trigger payment_intent.payment_failed\n```\n\n**Refunded Payment:**\n```powershell\nstripe trigger charge.refunded\n```\n\n### 5. Monitor Server Logs\nWatch your server console for:\n```\n💰 Payment succeeded: pi_xxxxx\n✅ Purchase created: 6735xxxxx\n```\n\n### 6. Verify in MongoDB\nCheck that:\n- Payment record created with `status: \"succeeded\"`\n- Purchase record created and linked\n- User has access to the product\n\n## Troubleshooting\n\n❌ **\"Webhook signature verification failed\"**\n- Ensure STRIPE_WEBHOOK_SECRET is correct\n- Restart server after updating .env\n\n❌ **\"No webhook secret provided\"**\n- Add STRIPE_WEBHOOK_SECRET to .env file\n\n❌ **\"stripe command not found\"**\n- Install Stripe CLI: https://stripe.com/docs/stripe-cli\n\n## Production Setup\n\n1. Go to Stripe Dashboard → Developers → Webhooks\n2. Add endpoint: `https://your-domain.com/api/payments/webhook`\n3. Select events: `payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`\n4. Copy webhook signing secret\n5. Update production .env with live webhook secret\n\n---\n\n**📖 More Info:** See PAYMENT_TESTING_GUIDE.md in project root"
+              },
+              "response": []
+            }
+          ]
+        }
+      ],
+      "description": "End-to-end payment flow testing scenarios with Stripe CLI integration"
     }
   ],
   "auth": {
@@ -2114,6 +2726,36 @@
     {
       "key": "review_id",
       "value": ""
+    },
+    {
+      "key": "payment_intent_id",
+      "value": "",
+      "description": "Stripe Payment Intent ID for payment tracking"
+    },
+    {
+      "key": "client_secret",
+      "value": "",
+      "description": "Stripe client secret for frontend payment confirmation"
+    },
+    {
+      "key": "course_payment_intent_id",
+      "value": "",
+      "description": "Payment Intent ID for course purchases"
+    },
+    {
+      "key": "subscription_payment_intent_id",
+      "value": "",
+      "description": "Payment Intent ID for subscription purchases"
+    },
+    {
+      "key": "test_payment_intent_id",
+      "value": "",
+      "description": "Payment Intent ID for testing complete flow"
+    },
+    {
+      "key": "course_id",
+      "value": "",
+      "description": "Course ID for course-related tests"
     }
   ]
 }

@@ -13,6 +13,7 @@ export interface IPurchase {
   pricingPlan?: Types.ObjectId;
 
   amount: number;
+  currencyDisplay: string;
   currency: string;
   paymentMethod:
     | "credit_card"
@@ -26,6 +27,10 @@ export interface IPurchase {
 
   userProvidedTransactionId?: string;
   paymentDetails?: Record<string, unknown>;
+
+  // Stripe-specific fields for better integration
+  stripePaymentIntentId?: string;
+  stripeCustomerId?: string;
 
   status:
     | "pending"
@@ -100,10 +105,15 @@ const purchaseSchema = new Schema<IPurchase>(
       required: [true, "Amount is required"],
       min: [0, "Amount cannot be negative"],
     },
+    currencyDisplay: {
+      type: String,
+      required: [true, "Currency display is required"],
+      default: "$", // Default to usd
+    },
     currency: {
       type: String,
       required: [true, "Currency is required"],
-      default: "BDT",
+      default: "usd",
       uppercase: true,
     },
     paymentMethod: {
@@ -134,10 +144,28 @@ const purchaseSchema = new Schema<IPurchase>(
     paymentDetails: {
       type: Schema.Types.Mixed,
     },
+    // Stripe-specific fields for direct reference and faster queries
+    stripePaymentIntentId: {
+      type: String,
+      index: true,
+      sparse: true, // Only index if present (for Stripe payments only)
+    },
+    stripeCustomerId: {
+      type: String,
+      index: true,
+      sparse: true,
+    },
     status: {
       type: String,
       required: [true, "Status is required"],
-      enum: ["pending", "completed", "expired", "cancelled", "refunded"],
+      enum: [
+        "pending",
+        "completed",
+        "expired",
+        "cancelled",
+        "refunded",
+        "verification_required",
+      ],
       default: "pending",
     },
     billingAddress: {
@@ -200,6 +228,11 @@ const purchaseSchema = new Schema<IPurchase>(
         );
       },
     },
+    itemMaxDownloads: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
     itemDownloadsUsed: {
       type: Number,
       default: 0,
@@ -223,6 +256,13 @@ const purchaseSchema = new Schema<IPurchase>(
     versionKey: false,
   },
 );
+
+// Indexes for better query performance
+purchaseSchema.index({ user: 1, status: 1 }); // User's purchases by status
+purchaseSchema.index({ user: 1, purchaseType: 1 }); // User's purchases by type
+purchaseSchema.index({ stripePaymentIntentId: 1 }); // Quick lookup by Stripe payment
+purchaseSchema.index({ subscriptionEndDate: 1 }, { sparse: true }); // Find expiring subscriptions
+purchaseSchema.index({ purchaseDate: -1 }); // Recent purchases first
 
 // 💡 Validation Hook
 purchaseSchema.pre("validate", function (next) {

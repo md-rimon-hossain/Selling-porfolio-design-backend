@@ -467,7 +467,7 @@ export const getUserDownloads = async (
 
     const downloads = await Download.find(filter)
       .populate("design", "title previewImageUrl price designerName")
-      .populate("purchase", "purchaseType amount")
+      .populate("purchase", "purchaseType amount currency currencyDisplay currencyDisplay")
       .sort(sort)
       .skip(skip)
       .limit(limitNum)

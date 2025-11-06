@@ -8,16 +8,24 @@ import express, {
 import cors from "cors";
 import router from "./app/routes/index";
 import morgan from "morgan";
-import cookieParser from "cookie-parser"
+import cookieParser from "cookie-parser";
 const app: Application = express();
+
+// IMPORTANT: Webhook route MUST be registered BEFORE express.json()
+// Stripe requires raw body for signature verification
+app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
 
 // Parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser())
+app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://127.0.0.1:3000","https://selling-porfolio-design-frontend.vercel.app"], // Specify your frontend URLs
+    origin: [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "https://selling-porfolio-design-frontend.vercel.app",
+    ], // Specify your frontend URLs
     credentials: true, // Allow credentials (cookies, authorization headers, etc.)
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: [
@@ -48,7 +56,7 @@ const jsonErrorHandler: ErrorRequestHandler = (
       message: "Invalid JSON format. please Give the right formatted json!",
       errorIn: err.message,
     });
-    return; 
+    return;
   }
 };
 
@@ -58,9 +66,10 @@ app.use("/api", router);
 
 app.get("/api/health", (req: Request, res: Response) => {
   res.json({
-    success:true, 
+    success: true,
     status: "OK",
-    message: "API is healthy and running!😊 you can go with rest of the routes.😉",
+    message:
+      "API is healthy and running!😊 you can go with rest of the routes.😉",
   });
 });
 
@@ -86,3 +95,4 @@ app.use("*", (req: Request, res: Response) => {
 });
 
 export default app;
+

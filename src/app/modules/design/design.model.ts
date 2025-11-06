@@ -93,6 +93,22 @@ const designSchema = new Schema<IDesign>(
       required: [true, "Discounted price is required"],
       min: [0, "Discounted price cannot be negative"],
     },
+    // 👇 Added default for usd 
+    currencyCode: {
+      type: String,
+      required: [true, "Currency code is required"],
+      uppercase: true,
+      trim: true,
+      default: "usd", 
+    },
+    
+    // 👇 Added default for 'Tk' display
+    currencyDisplay: {
+      type: String,
+      required: [true, "Currency display string is required"],
+      trim: true,
+      default: "$", // Common display symbol for usd (e.g., '$' is another option)
+    },
 
     includedFormats: [
       {
