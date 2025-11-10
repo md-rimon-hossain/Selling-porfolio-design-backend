@@ -24,6 +24,19 @@ const pricingPlanSchema = new mongoose_1.Schema({
         type: Number,
         min: [0, "Final price cannot be negative"],
     },
+    currencyCode: {
+        type: String,
+        required: [true, "Currency code is required"],
+        uppercase: true,
+        trim: true,
+        default: "usd",
+    },
+    currencyDisplay: {
+        type: String,
+        required: [true, "Currency display string is required"],
+        trim: true,
+        default: "$", // Common display symbol for usd (e.g., '$' is another option)
+    },
     features: [
         {
             type: String,

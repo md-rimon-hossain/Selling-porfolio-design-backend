@@ -49,8 +49,8 @@ export const toggleLikeDesign = async (
       // Unlike: Remove the like
       await Like.findByIdAndDelete(existingLike._id);
 
-      // Decrement the like count
-      await Design.findByIdAndUpdate(
+      // Decrement the like count and get updated design
+      const updatedDesign = await Design.findByIdAndUpdate(
         designId,
         { $inc: { likesCount: -1 } },
         { new: true },
@@ -61,7 +61,7 @@ export const toggleLikeDesign = async (
         message: "Design unliked successfully",
         data: {
           liked: false,
-          likesCount: design.likesCount - 1,
+          likesCount: updatedDesign?.likesCount || 0,
         },
       });
     } else {
@@ -73,8 +73,8 @@ export const toggleLikeDesign = async (
 
       await newLike.save();
 
-      // Increment the like count
-      await Design.findByIdAndUpdate(
+      // Increment the like count and get updated design
+      const updatedDesign = await Design.findByIdAndUpdate(
         designId,
         { $inc: { likesCount: 1 } },
         { new: true },
@@ -85,7 +85,7 @@ export const toggleLikeDesign = async (
         message: "Design liked successfully",
         data: {
           liked: true,
-          likesCount: design.likesCount + 1,
+          likesCount: updatedDesign?.likesCount || 0,
         },
       });
     }
@@ -131,7 +131,6 @@ export const getUserLikedDesigns = async (
           path: "parentCategory subCategory designer",
           select: "name",
         },
-        
       })
       .sort({ createdAt: -1 })
       .skip(skip)

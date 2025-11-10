@@ -209,7 +209,7 @@ export const createPurchase = async (
 
     if (purchaseType === "individual") {
       populateField = "design";
-      selectFields = "title price images";
+      selectFields = "title discountedPrice basePrice images";
     } else {
       populateField = "pricingPlan";
       selectFields = "name description features duration maxDownloads";
@@ -315,7 +315,7 @@ export const getAllPurchases = async (
 
     const purchases = await Purchase.find(filter)
       .populate("user", "name email")
-      .populate("design", "title price")
+      .populate("design", "title basePrice discountedPrice currencyDisplay currencyCode")
       .populate("pricingPlan", "name description price finalPrice duration")
       .sort(sort)
       .skip(skip)
@@ -388,7 +388,7 @@ export const getUserPurchases = async (
         "pricingPlan",
         "name description features duration price finalPrice",
       )
-      .populate("design", "title price images")
+      .populate("design", "title price basePrice discountedPrice currencyDisplay currencyCode")
       .sort(sort)
       .skip(skip)
       .limit(limitNum)

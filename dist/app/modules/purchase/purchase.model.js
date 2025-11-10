@@ -42,10 +42,15 @@ const purchaseSchema = new mongoose_1.Schema({
         required: [true, "Amount is required"],
         min: [0, "Amount cannot be negative"],
     },
+    currencyDisplay: {
+        type: String,
+        required: [true, "Currency display is required"],
+        default: "$", // Default to usd
+    },
     currency: {
         type: String,
         required: [true, "Currency is required"],
-        default: "BDT",
+        default: "usd",
         uppercase: true,
     },
     paymentMethod: {
@@ -76,10 +81,28 @@ const purchaseSchema = new mongoose_1.Schema({
     paymentDetails: {
         type: mongoose_1.Schema.Types.Mixed,
     },
+    // Stripe-specific fields for direct reference and faster queries
+    stripePaymentIntentId: {
+        type: String,
+        index: true,
+        sparse: true, // Only index if present (for Stripe payments only)
+    },
+    stripeCustomerId: {
+        type: String,
+        index: true,
+        sparse: true,
+    },
     status: {
         type: String,
         required: [true, "Status is required"],
-        enum: ["pending", "completed", "expired", "cancelled", "refunded"],
+        enum: [
+            "pending",
+            "completed",
+            "expired",
+            "cancelled",
+            "refunded",
+            "verification_required",
+        ],
         default: "pending",
     },
     billingAddress: {
@@ -136,6 +159,11 @@ const purchaseSchema = new mongoose_1.Schema({
             return (this.purchaseType === "subscription" && this.status === "completed");
         },
     },
+    itemMaxDownloads: {
+        type: Number,
+        min: 0,
+        default: 0,
+    },
     itemDownloadsUsed: {
         type: Number,
         default: 0,
@@ -157,6 +185,12 @@ const purchaseSchema = new mongoose_1.Schema({
     timestamps: true,
     versionKey: false,
 });
+// Indexes for better query performance
+purchaseSchema.index({ user: 1, status: 1 }); // User's purchases by status
+purchaseSchema.index({ user: 1, purchaseType: 1 }); // User's purchases by type
+purchaseSchema.index({ stripePaymentIntentId: 1 }); // Quick lookup by Stripe payment
+purchaseSchema.index({ subscriptionEndDate: 1 }, { sparse: true }); // Find expiring subscriptions
+purchaseSchema.index({ purchaseDate: -1 }); // Recent purchases first
 // 💡 Validation Hook
 purchaseSchema.pre("validate", function (next) {
     const isIndividual = this.purchaseType === "individual";

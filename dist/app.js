@@ -9,12 +9,19 @@ const index_1 = __importDefault(require("./app/routes/index"));
 const morgan_1 = __importDefault(require("morgan"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const app = (0, express_1.default)();
+// IMPORTANT: Webhook route MUST be registered BEFORE express.json()
+// Stripe requires raw body for signature verification
+app.use("/api/payments/webhook", express_1.default.raw({ type: "application/json" }));
 // Parsers
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cookie_parser_1.default)());
 app.use((0, cors_1.default)({
-    origin: ["http://localhost:3000", "http://127.0.0.1:3000", "https://selling-porfolio-design-frontend.vercel.app"], // Specify your frontend URLs
+    origin: [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://selling-porfolio-design-frontend.vercel.app",
+    ], // Specify your frontend URLs
     credentials: true, // Allow credentials (cookies, authorization headers, etc.)
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: [

@@ -50,14 +50,14 @@ const toggleLikeDesign = (req, res) => __awaiter(void 0, void 0, void 0, functio
         if (existingLike) {
             // Unlike: Remove the like
             yield like_model_1.Like.findByIdAndDelete(existingLike._id);
-            // Decrement the like count
-            yield design_model_1.Design.findByIdAndUpdate(designId, { $inc: { likesCount: -1 } }, { new: true });
+            // Decrement the like count and get updated design
+            const updatedDesign = yield design_model_1.Design.findByIdAndUpdate(designId, { $inc: { likesCount: -1 } }, { new: true });
             res.status(200).json({
                 success: true,
                 message: "Design unliked successfully",
                 data: {
                     liked: false,
-                    likesCount: design.likesCount - 1,
+                    likesCount: (updatedDesign === null || updatedDesign === void 0 ? void 0 : updatedDesign.likesCount) || 0,
                 },
             });
         }
@@ -68,14 +68,14 @@ const toggleLikeDesign = (req, res) => __awaiter(void 0, void 0, void 0, functio
                 design: designId,
             });
             yield newLike.save();
-            // Increment the like count
-            yield design_model_1.Design.findByIdAndUpdate(designId, { $inc: { likesCount: 1 } }, { new: true });
+            // Increment the like count and get updated design
+            const updatedDesign = yield design_model_1.Design.findByIdAndUpdate(designId, { $inc: { likesCount: 1 } }, { new: true });
             res.status(200).json({
                 success: true,
                 message: "Design liked successfully",
                 data: {
                     liked: true,
-                    likesCount: design.likesCount + 1,
+                    likesCount: (updatedDesign === null || updatedDesign === void 0 ? void 0 : updatedDesign.likesCount) || 0,
                 },
             });
         }

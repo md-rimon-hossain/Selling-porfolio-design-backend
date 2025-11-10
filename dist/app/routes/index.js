@@ -13,6 +13,7 @@ const review_routes_1 = __importDefault(require("../modules/review/review.routes
 const download_routes_1 = __importDefault(require("../modules/download/download.routes"));
 const like_routes_1 = __importDefault(require("../modules/like/like.routes"));
 const user_routes_1 = require("../modules/user/user.routes");
+const payment_routes_1 = require("../modules/payments/payment.routes");
 const router = (0, express_1.Router)();
 router.use("/auth", auth_routes_1.default);
 router.use("/users", user_routes_1.userRoutes);
@@ -23,4 +24,5 @@ router.use("/purchases", purchase_routes_1.default);
 router.use("/reviews", review_routes_1.default);
 router.use("/downloads", download_routes_1.default);
 router.use("/likes", like_routes_1.default);
+router.use("/payments", payment_routes_1.PaymentRoutes);
 exports.default = router;

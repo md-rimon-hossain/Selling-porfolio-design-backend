@@ -1,632 +1,1232 @@
-# 🎨 Ecommerce Design Platform - Complete API Documentation
+# 🎨 Design Portfolio Marketplace - Backend API# 🎨 Ecommerce Design Platform - Complete API Documentation
 
-## 📋 Table of Contents
+> A robust, production-ready Express.js REST API for a design marketplace platform with user authentication, OAuth integration, payment processing, and file management.## 📋 Table of Contents
 
-- [Overview](#overview)
+---- [Overview](#overview)
+
 - [Getting Started](#getting-started)
-- [Authentication](#authentication)
+
+## 📋 Table of Contents- [Authentication](#authentication)
+
 - [API Endpoints](#api-endpoints)
-  - [Health Check](#health-check)
-  - [Authentication](#authentication-endpoints)
-  - [Categories](#categories)
-  - [Designs](#designs)
-  - [Pricing Plans](#pricing-plans)
-  - [Purchases](#purchases)
-  - [Reviews](#reviews)
-- [Testing Guide](#testing-guide)
-- [Error Handling](#error-handling)
-- [Rate Limiting](#rate-limiting)
+
+- [Overview](#overview) - [Health Check](#health-check)
+
+- [Tech Stack](#tech-stack) - [Authentication](#authentication-endpoints)
+
+- [Features](#features) - [Categories](#categories)
+
+- [Getting Started](#getting-started) - [Designs](#designs)
+
+- [Environment Variables](#environment-variables) - [Pricing Plans](#pricing-plans)
+
+- [API Endpoints](#api-endpoints) - [Purchases](#purchases)
+
+- [Project Structure](#project-structure) - [Reviews](#reviews)
+
+- [Development](#development)- [Testing Guide](#testing-guide)
+
+- [Deployment](#deployment)- [Error Handling](#error-handling)
+
+- [Troubleshooting](#troubleshooting)- [Rate Limiting](#rate-limiting)
+
 - [Security](#security)
+
+---
 
 ---
 
 ## 🌟 Overview
 
-**Ecommerce Design Platform** is a comprehensive digital marketplace for selling and purchasing design assets. Built with modern technologies including **Node.js**, **Express**, **TypeScript**, **MongoDB**, and **JWT Authentication**.
+## 🌟 Overview
 
-### 🚀 Key Features
+This is the backend API for a design marketplace platform where users can:
 
-- **User Authentication** - JWT-based authentication with role-based access control
-- **Design Marketplace** - Upload, browse, and purchase design assets
+- Browse and purchase design templates**Ecommerce Design Platform** is a comprehensive digital marketplace for selling and purchasing design assets. Built with modern technologies including **Node.js**, **Express**, **TypeScript**, **MongoDB**, and **JWT Authentication**.
+
+- Upload and sell their own designs
+
+- Leave reviews and likes on designs### 🚀 Key Features
+
+- Make secure payments via Stripe
+
+- Download purchased designs- **User Authentication** - JWT-based authentication with role-based access control
+
+- OAuth authentication with Google and GitHub- **Design Marketplace** - Upload, browse, and purchase design assets
+
 - **Category Management** - Organize designs by categories
-- **Subscription Plans** - Flexible pricing plans with different access levels
+
+---- **Subscription Plans** - Flexible pricing plans with different access levels
+
 - **Purchase System** - Complete ecommerce workflow with payment processing
-- **Review System** - Customer feedback and rating system
+
+## 🛠️ Tech Stack- **Review System** - Customer feedback and rating system
+
 - **Analytics Dashboard** - Comprehensive reporting for administrators
-- **Advanced Filtering** - Search and filter across all modules
-- **Real-time Validation** - Input validation using Zod schemas
 
-### 🛠 Tech Stack
+- **Runtime**: Node.js- **Advanced Filtering** - Search and filter across all modules
 
-- **Backend**: Node.js, Express.js, TypeScript
+- **Framework**: Express.js with TypeScript- **Real-time Validation** - Input validation using Zod schemas
+
 - **Database**: MongoDB with Mongoose ODM
-- **Authentication**: JWT (JSON Web Tokens)
+
+- **Authentication**: JWT + OAuth (Google, GitHub via NextAuth)### 🛠 Tech Stack
+
+- **Payment**: Stripe (Payment Intents + Webhooks)
+
+- **File Storage**: Cloudinary- **Backend**: Node.js, Express.js, TypeScript
+
+- **Validation**: Zod- **Database**: MongoDB with Mongoose ODM
+
+- **Security**: bcrypt, cookie-parser, CORS- **Authentication**: JWT (JSON Web Tokens)
+
 - **Validation**: Zod schema validation
-- **Security**: bcrypt password hashing, CORS protection
+
+---- **Security**: bcrypt password hashing, CORS protection
+
 - **Development**: ESLint, Prettier, ts-node-dev
+
+## ✨ Features
 
 ---
 
-## 🚀 Getting Started
+### Authentication & Authorization
 
-### Prerequisites
+- ✅ JWT-based authentication## 🚀 Getting Started
+
+- ✅ OAuth integration (Google & GitHub)
+
+- ✅ Role-based access control (User/Admin)### Prerequisites
+
+- ✅ Secure password hashing with bcrypt
 
 - Node.js (v16 or higher)
-- MongoDB database
-- npm or yarn package manager
 
-### Installation
+### Design Management- MongoDB database
 
-```bash
+- ✅ CRUD operations for designs- npm or yarn package manager
+
+- ✅ Image upload to Cloudinary
+
+- ✅ Category-based organization### Installation
+
+- ✅ Search and filtering
+
+- ✅ Like/unlike functionality```bash
+
 # Clone the repository
-git clone <repository-url>
-cd ecommerce-for-selling-design
 
-# Install dependencies
-npm install
+### Payment Systemgit clone <repository-url>
+
+- ✅ Stripe Payment Intentscd ecommerce-for-selling-design
+
+- ✅ Webhook handling for payment events
+
+- ✅ Purchase tracking# Install dependencies
+
+- ✅ Pricing plans managementnpm install
+
+- ✅ Multiple currency support (USD, BDT)
 
 # Set up environment variables
-cp .env.example .env
 
-# Build the project
-npm run build
+### Downloads & Reviewscp .env.example .env
 
-# Start development server
-npm run start:dev
+- ✅ Secure download system for purchased designs
 
-# Start production server
-npm start
-```
+- ✅ Review and rating system# Build the project
+
+- ✅ Download tracking and analyticsnpm run build
+
+### Admin Features# Start development server
+
+- ✅ User managementnpm run start:dev
+
+- ✅ Payment monitoring
+
+- ✅ Design approval workflow# Start production server
+
+- ✅ Analytics dashboard datanpm start
+
+````
+
+---
 
 ### Environment Variables
 
+## 🚀 Getting Started
+
 ```env
-NODE_ENV=development
+
+### PrerequisitesNODE_ENV=development
+
 PORT=5000
-DATABASE_URL=mongodb://localhost:27017/ecommerce-design
-JWT_SECRET=your-jwt-secret-key
-JWT_EXPIRES_IN=7d
-BCRYPT_SALT_ROUNDS=12
-```
 
-### Base URL
+- **Node.js**: v18+ (LTS recommended)DATABASE_URL=mongodb://localhost:27017/ecommerce-design
 
-```
-Local Development: http://localhost:5000/api/v1
-Production: https://your-domain.com/api/v1
-```
+- **MongoDB**: v6+ (local or Atlas)JWT_SECRET=your-jwt-secret-key
 
----
+- **npm** or **yarn**JWT_EXPIRES_IN=7d
 
-## 🔐 Authentication
+- **Stripe Account**: For payment processingBCRYPT_SALT_ROUNDS=12
+
+- **Cloudinary Account**: For file storage```
+
+
+
+### Installation### Base URL
+
+
+
+1. **Clone the repository**```
+
+   ```bashLocal Development: http://localhost:5000/api/v1
+
+   cd backendProduction: https://your-domain.com/api/v1
+
+````
+
+2. **Install dependencies**---
+
+   ```bash
+
+   npm install## 🔐 Authentication
+
+   ```
 
 The API uses **JWT (JSON Web Token)** authentication with role-based access control.
 
-### User Roles
+3. **Create environment file**
 
-- **Admin**: Full access to all endpoints including analytics and management
+   ````bash### User Roles
+
+   cp .env.example .env
+
+   ```- **Admin**: Full access to all endpoints including analytics and management
+   ````
+
 - **Customer**: Access to public endpoints, purchases, and personal data
+
+4. **Configure environment variables** (see [Environment Variables](#environment-variables))
 
 ### Authentication Header
 
-```http
-Authorization: Bearer <your-jwt-token>
-```
+5. **Start development server**
 
-### Token Lifecycle
+   `bash`http
 
-- **Expiration**: 7 days (configurable)
+   npm run start:devAuthorization: Bearer <your-jwt-token>
+
+   ```
+
+   ```
+
+The API will be available at `http://localhost:5000`### Token Lifecycle
+
+---- **Expiration**: 7 days (configurable)
+
 - **Refresh**: Currently manual (login again)
-- **Storage**: Client-side storage (localStorage/sessionStorage recommended)
 
----
+## 🔐 Environment Variables- **Storage**: Client-side storage (localStorage/sessionStorage recommended)
 
-## 📋 API Endpoints
+Create a `.env` file in the backend root directory:---
 
-### Health Check
+````bash## 📋 API Endpoints
+
+# Server Configuration
+
+PORT=5000### Health Check
+
+NODE_ENV=development
 
 #### GET `/health`
 
-Check API server status and connectivity.
+# Database
 
-**Access**: Public  
+DB_URI=mongodb://localhost:27017/design-marketplaceCheck API server status and connectivity.
+
+# Or use MongoDB Atlas:
+
+# DB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/design-marketplace**Access**: Public
+
 **Response**:
 
-```json
-{
+# JWT Authentication
+
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production```json
+
+JWT_EXPIRES_IN=7d{
+
   "success": true,
-  "message": "Server is running smoothly",
-  "timestamp": "2025-01-20T10:30:00.000Z",
+
+# Password Hashing  "message": "Server is running smoothly",
+
+BCRYPT_SALT_ROUNDS=10  "timestamp": "2025-01-20T10:30:00.000Z",
+
   "version": "1.0.0"
-}
-```
 
----
+# Cloudinary (File Storage)}
 
-## 🔑 Authentication Endpoints
+CLOUDINARY_CLOUD_NAME=your-cloud-name```
 
-### Register User
+CLOUDINARY_API_KEY=your-api-key
+
+CLOUDINARY_API_SECRET=your-api-secret---
+
+
+
+# Stripe Payment## 🔑 Authentication Endpoints
+
+STRIPE_SECRET_KEY=sk_test_YOUR_STRIPE_SECRET_KEY
+
+STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_STRIPE_PUBLISHABLE_KEY### Register User
+
+STRIPE_WEBHOOK_SECRET=whsec_YOUR_WEBHOOK_SECRET
 
 #### POST `/auth/register`
 
-Create a new user account.
+# CORS Configuration
 
-**Access**: Public  
-**Request Body**:
+FRONTEND_URL=http://localhost:3000Create a new user account.
 
-```json
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "SecurePassword123!",
-  "role": "customer"
-}
-```
+````
 
-**Response** (201):
+**Access**: Public
 
-```json
-{
-  "success": true,
-  "message": "User registered successfully",
-  "data": {
-    "_id": "64f8a1b2c3d4e5f6789abcde",
+### 🔑 Getting API Keys**Request Body**:
+
+#### MongoDB Atlas```json
+
+1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas){
+
+2. Create a free cluster "name": "John Doe",
+
+3. Get connection string from "Connect" → "Connect your application" "email": "john@example.com",
+
+"password": "SecurePassword123!",
+
+#### Cloudinary "role": "customer"
+
+1. Sign up at [Cloudinary](https://cloudinary.com/)}
+
+2. Find credentials in Dashboard → Account Details```
+
+#### Stripe**Response** (201):
+
+1. Create account at [Stripe](https://stripe.com)
+
+2. Get test keys from Dashboard → Developers → API keys```json
+
+3. For webhook secret, see [Webhook Setup](#webhook-setup){
+
+"success": true,
+
+--- "message": "User registered successfully",
+
+"data": {
+
+## 📡 API Endpoints "\_id": "64f8a1b2c3d4e5f6789abcde",
+
     "name": "John Doe",
-    "email": "john@example.com",
-    "role": "customer",
-    "isActive": true,
-    "createdAt": "2025-01-20T10:30:00.000Z"
+
+### Base URL "email": "john@example.com",
+
+```````"role": "customer",
+
+http://localhost:5000/api    "isActive": true,
+
+```    "createdAt": "2025-01-20T10:30:00.000Z"
+
   }
-}
-```
 
-### Login User
+### Health Check}
 
-#### POST `/auth/login`
+```http```
 
-Authenticate user and receive JWT token.
+GET /api/health
 
-**Access**: Public  
-**Request Body**:
+```### Login User
 
-```json
+
+
+### Authentication#### POST `/auth/login`
+
+```http
+
+POST   /api/auth/register          # Register new userAuthenticate user and receive JWT token.
+
+POST   /api/auth/login             # Login with email/password
+
+POST   /api/auth/oauth             # OAuth login (Google/GitHub)**Access**: Public
+
+POST   /api/auth/refresh           # Refresh JWT token**Request Body**:
+
+GET    /api/auth/me                # Get current user
+
+``````json
+
 {
-  "email": "john@example.com",
-  "password": "SecurePassword123!"
-}
-```
 
-**Response** (200):
+### Users  "email": "john@example.com",
 
-```json
-{
-  "success": true,
-  "message": "Login successful",
-  "data": {
-    "user": {
-      "_id": "64f8a1b2c3d4e5f6789abcde",
-      "name": "John Doe",
-      "email": "john@example.com",
+```http  "password": "SecurePassword123!"
+
+GET    /api/users                  # Get all users (Admin)}
+
+GET    /api/users/:id              # Get user by ID```
+
+PATCH  /api/users/:id              # Update user
+
+DELETE /api/users/:id              # Delete user (Admin)**Response** (200):
+
+```````
+
+````json
+
+### Designs{
+
+```http  "success": true,
+
+GET    /api/designs                # Get all designs (with filters)  "message": "Login successful",
+
+GET    /api/designs/:id            # Get single design  "data": {
+
+POST   /api/designs                # Create design (Auth required)    "user": {
+
+PATCH  /api/designs/:id            # Update design (Owner/Admin)      "_id": "64f8a1b2c3d4e5f6789abcde",
+
+DELETE /api/designs/:id            # Delete design (Owner/Admin)      "name": "John Doe",
+
+```      "email": "john@example.com",
+
       "role": "customer"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }
-}
-```
 
-### Change Password
+**Query Parameters for GET /api/designs:**    },
+
+- `category`: Filter by category ID    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+- `search`: Search in title/description  }
+
+- `minPrice`: Minimum price}
+
+- `maxPrice`: Maximum price```
+
+- `sort`: Sort by (price, createdAt, likes)
+
+- `page`: Page number (default: 1)### Change Password
+
+- `limit`: Items per page (default: 12)
 
 #### PUT `/auth/change-password`
 
-Change user password (requires authentication).
+### Categories
 
-**Access**: Authenticated Users  
-**Request Body**:
+```httpChange user password (requires authentication).
 
-```json
-{
+GET    /api/categories             # Get all categories
+
+GET    /api/categories/:id         # Get category by ID**Access**: Authenticated Users
+
+POST   /api/categories             # Create category (Admin)**Request Body**:
+
+PATCH  /api/categories/:id         # Update category (Admin)
+
+DELETE /api/categories/:id         # Delete category (Admin)```json
+
+```{
+
   "currentPassword": "OldPassword123!",
-  "newPassword": "NewSecurePassword123!"
-}
-```
 
----
+### Pricing Plans  "newPassword": "NewSecurePassword123!"
 
-## 📂 Categories
+```http}
+
+GET    /api/pricing-plans          # Get all pricing plans```
+
+GET    /api/pricing-plans/:id      # Get plan by ID
+
+POST   /api/pricing-plans          # Create plan (Admin)---
+
+PATCH  /api/pricing-plans/:id      # Update plan (Admin)
+
+DELETE /api/pricing-plans/:id      # Delete plan (Admin)## 📂 Categories
+
+````
 
 ### Get All Categories
 
-#### GET `/categories`
+### Payments
 
-Retrieve all design categories with optional filtering.
+```http#### GET `/categories`
 
-**Access**: Public  
-**Query Parameters**:
+POST /api/payments/create-payment-intent # Create Stripe payment
+
+POST /api/payments/confirm # Confirm paymentRetrieve all design categories with optional filtering.
+
+POST /api/payments/webhook # Stripe webhook (raw body)
+
+GET /api/payments # Get all payments (Admin)**Access**: Public
+
+GET /api/payments/user/:userId # Get user payments**Query Parameters**:
+
+````
 
 - `page` (number): Page number (default: 1)
-- `limit` (number): Items per page (default: 10)
-- `search` (string): Search term
-- `isActive` (boolean): Filter by active status
-- `sortBy` (string): Sort field (name, createdAt)
-- `sortOrder` (string): asc | desc
+
+### Purchases- `limit` (number): Items per page (default: 10)
+
+```http- `search` (string): Search term
+
+GET    /api/purchases                         # Get user's purchases- `isActive` (boolean): Filter by active status
+
+GET    /api/purchases/:id                     # Get purchase details- `sortBy` (string): Sort field (name, createdAt)
+
+GET    /api/purchases/check/:designId         # Check if design purchased- `sortOrder` (string): asc | desc
+
+````
 
 **Response** (200):
 
-```json
-{
-  "success": true,
-  "message": "Categories retrieved successfully",
+### Downloads
+
+`http`json
+
+GET /api/downloads/:purchaseId # Download purchased design{
+
+GET /api/downloads/history # Get download history "success": true,
+
+````"message": "Categories retrieved successfully",
+
   "data": [
-    {
-      "_id": "64f8a1b2c3d4e5f6789abcde",
-      "name": "Logo Design",
-      "description": "Professional logo designs for businesses",
-      "isActive": true,
-      "designCount": 245,
-      "createdAt": "2025-01-15T08:20:00.000Z"
+
+### Reviews    {
+
+```http      "_id": "64f8a1b2c3d4e5f6789abcde",
+
+GET    /api/reviews/design/:designId         # Get reviews for design      "name": "Logo Design",
+
+POST   /api/reviews                          # Create review (Auth)      "description": "Professional logo designs for businesses",
+
+PATCH  /api/reviews/:id                      # Update review (Owner)      "isActive": true,
+
+DELETE /api/reviews/:id                      # Delete review (Owner/Admin)      "designCount": 245,
+
+```      "createdAt": "2025-01-15T08:20:00.000Z"
+
     }
-  ],
-  "pagination": {
-    "currentPage": 1,
-    "totalPages": 5,
-    "totalItems": 50,
-    "hasNext": true,
+
+### Likes  ],
+
+```http  "pagination": {
+
+POST   /api/likes/toggle/:designId           # Like/unlike design    "currentPage": 1,
+
+GET    /api/likes/status/:designId           # Check if user liked    "totalPages": 5,
+
+GET    /api/likes/design/:designId           # Get design like count    "totalItems": 50,
+
+```    "hasNext": true,
+
     "hasPrev": false
-  }
+
+---  }
+
 }
-```
 
-### Create Category
+## 📁 Project Structure```
 
-#### POST `/categories`
 
-Create a new design category.
 
-**Access**: Admin Only  
-**Request Body**:
+```### Create Category
 
-```json
-{
-  "name": "Web Design Templates",
-  "description": "Modern and responsive web design templates",
-  "isActive": true
-}
-```
+backend/
 
-### Get Single Category
+├── src/#### POST `/categories`
 
-#### GET `/categories/:id`
+│   ├── app/
 
-Retrieve a specific category by ID.
+│   │   ├── config/Create a new design category.
 
-**Access**: Public
+│   │   │   ├── database.ts           # MongoDB connection
 
-### Update Category
+│   │   │   └── index.ts               # Config loader**Access**: Admin Only
 
-#### PUT `/categories/:id`
+│   │   ├── middlewares/**Request Body**:
 
-Update an existing category.
+│   │   │   ├── auth.middleware.ts     # JWT verification
 
-**Access**: Admin Only
+│   │   │   ├── error.middleware.ts    # Global error handler```json
 
-### Delete Category
+│   │   │   └── upload.middleware.ts   # Multer file upload{
 
-#### DELETE `/categories/:id`
+│   │   ├── modules/  "name": "Web Design Templates",
 
-Delete a category (soft delete).
+│   │   │   ├── auth/  "description": "Modern and responsive web design templates",
+
+│   │   │   │   ├── auth.controller.ts  "isActive": true
+
+│   │   │   │   ├── auth.routes.ts}
+
+│   │   │   │   ├── auth.service.ts```
+
+│   │   │   │   └── auth.validation.ts
+
+│   │   │   ├── design/               # Design CRUD### Get Single Category
+
+│   │   │   ├── category/             # Categories
+
+│   │   │   ├── payments/             # Stripe integration#### GET `/categories/:id`
+
+│   │   │   ├── purchase/             # Purchase tracking
+
+│   │   │   ├── download/             # Download managementRetrieve a specific category by ID.
+
+│   │   │   ├── review/               # Reviews system
+
+│   │   │   ├── like/                 # Like functionality**Access**: Public
+
+│   │   │   ├── user/                 # User management
+
+│   │   │   └── pricingPlan/          # Pricing plans### Update Category
+
+│   │   ├── routes/
+
+│   │   │   └── index.ts              # Route aggregator#### PUT `/categories/:id`
+
+│   │   ├── services/                 # Shared services
+
+│   │   └── utils/Update an existing category.
+
+│   │       ├── cloudinary.ts         # Cloudinary upload
+
+│   │       └── jwt.ts                # JWT utilities**Access**: Admin Only
+
+│   ├── app.ts                        # Express app setup
+
+│   └── server.ts                     # Server entry point### Delete Category
+
+├── .env.example                      # Example environment file
+
+├── package.json#### DELETE `/categories/:id`
+
+├── tsconfig.json
+
+└── README.mdDelete a category (soft delete).
+
+````
 
 **Access**: Admin Only
 
 ---
+
+---
+
+## 💻 Development
 
 ## 🎨 Designs
 
+### Available Scripts
+
 ### Get All Designs
 
-#### GET `/designs`
+````bash
+
+# Development with auto-reload#### GET `/designs`
+
+npm run start:dev
 
 Retrieve all designs with advanced filtering and search.
 
-**Access**: Public  
+# Production build
+
+npm run build**Access**: Public
+
 **Query Parameters**:
 
-- `page`, `limit`: Pagination
+# Start production server
+
+npm start- `page`, `limit`: Pagination
+
 - `search`: Search in title/description
-- `category`: Filter by category ID
-- `minPrice`, `maxPrice`: Price range
-- `tags`: Filter by tags (comma-separated)
+
+# Linting- `category`: Filter by category ID
+
+npm run lint- `minPrice`, `maxPrice`: Price range
+
+npm run lint:fix- `tags`: Filter by tags (comma-separated)
+
 - `sortBy`: price, downloads, rating, createdAt
-- `sortOrder`: asc | desc
 
-**Response** (200):
+# Code formatting- `sortOrder`: asc | desc
 
-```json
+npm run format
+
+```**Response** (200):
+
+
+
+### Code Style```json
+
 {
-  "success": true,
-  "data": [
-    {
-      "_id": "64f8a1b2c3d4e5f6789abcde",
-      "title": "Modern Corporate Logo Pack",
-      "description": "Collection of 20 modern corporate logos",
-      "price": 49.99,
-      "category": {
-        "_id": "64f8a1b2c3d4e5f6789abcdf",
-        "name": "Logo Design"
-      },
-      "tags": ["corporate", "modern", "professional"],
-      "images": ["image1.jpg", "image2.jpg"],
-      "files": ["logo-pack.zip"],
-      "downloads": 1250,
-      "rating": {
-        "average": 4.8,
-        "count": 156
-      },
-      "isActive": true,
-      "createdAt": "2025-01-10T12:00:00.000Z"
-    }
-  ],
-  "pagination": { ... }
-}
-```
 
-### Upload Design
+This project uses:  "success": true,
+
+- **ESLint**: For code linting  "data": [
+
+- **Prettier**: For code formatting    {
+
+- **TypeScript**: For type safety      "_id": "64f8a1b2c3d4e5f6789abcde",
+
+      "title": "Modern Corporate Logo Pack",
+
+### Database Migrations      "description": "Collection of 20 modern corporate logos",
+
+      "price": 49.99,
+
+To add new fields or migrate data:      "category": {
+
+        "_id": "64f8a1b2c3d4e5f6789abcdf",
+
+```bash        "name": "Logo Design"
+
+npm run migrate:add-currency      },
+
+```      "tags": ["corporate", "modern", "professional"],
+
+      "images": ["image1.jpg", "image2.jpg"],
+
+---      "files": ["logo-pack.zip"],
+
+      "downloads": 1250,
+
+## 🔧 Stripe Webhook Setup      "rating": {
+
+        "average": 4.8,
+
+Stripe webhooks are required for payment confirmation.        "count": 156
+
+      },
+
+### Development (Local Testing)      "isActive": true,
+
+      "createdAt": "2025-01-10T12:00:00.000Z"
+
+1. **Install Stripe CLI**    }
+
+   ```bash  ],
+
+   # Windows (use Scoop or download from stripe.com)  "pagination": { ... }
+
+   scoop install stripe}
+
+````
+
+# macOS
+
+brew install stripe/stripe-cli/stripe### Upload Design
+
+````
 
 #### POST `/designs`
 
-Upload a new design to the marketplace.
+2. **Login to Stripe**
 
-**Access**: Admin Only  
+```bashUpload a new design to the marketplace.
+
+stripe login
+
+```**Access**: Admin Only
+
 **Request Body**:
 
-```json
-{
-  "title": "Minimalist Business Card Set",
-  "description": "Clean and professional business card designs",
-  "price": 29.99,
-  "category": "64f8a1b2c3d4e5f6789abcdf",
-  "tags": ["business-card", "minimalist", "professional"],
-  "images": ["preview1.jpg", "preview2.jpg"],
-  "files": ["business-cards.zip"],
+3. **Forward webhooks to local server**
+
+```bash```json
+
+stripe listen --forward-to localhost:5000/api/payments/webhook{
+
+```  "title": "Minimalist Business Card Set",
+
+"description": "Clean and professional business card designs",
+
+4. **Copy webhook secret**  "price": 29.99,
+
+The CLI will display:  "category": "64f8a1b2c3d4e5f6789abcdf",
+
+```  "tags": ["business-card", "minimalist", "professional"],
+
+> Ready! Your webhook signing secret is whsec_...  "images": ["preview1.jpg", "preview2.jpg"],
+
+```  "files": ["business-cards.zip"],
+
   "requirements": "Adobe Illustrator CS6 or higher",
-  "license": "Commercial use allowed",
-  "isActive": true
-}
-```
 
-### Get Single Design
+Add this to `.env`:  "license": "Commercial use allowed",
 
-#### GET `/designs/:id`
+```bash  "isActive": true
 
-Retrieve detailed information about a specific design.
+STRIPE_WEBHOOK_SECRET=whsec_YOUR_SECRET_HERE}
 
-**Access**: Public
+````
 
-### Update Design
+5. **Test payments**### Get Single Design
 
-#### PUT `/designs/:id`
+   Use Stripe test cards:
 
-Update design information.
+   - Success: `4242 4242 4242 4242`#### GET `/designs/:id`
 
-**Access**: Admin Only
+   - Decline: `4000 0000 0000 0002`
 
-### Delete Design
+   - Any future date for expiry, any 3-digit CVCRetrieve detailed information about a specific design.
 
-#### DELETE `/designs/:id`
+### Production (Deployed Backend)**Access**: Public
 
-Remove a design from the marketplace.
+1. Go to [Stripe Dashboard](https://dashboard.stripe.com)### Update Design
 
-**Access**: Admin Only
+2. Navigate to **Developers** → **Webhooks**
 
-### Get Design Analytics
+3. Click **Add endpoint**#### PUT `/designs/:id`
 
-#### GET `/designs/analytics`
+4. Set endpoint URL: `https://your-api-domain.com/api/payments/webhook`
+
+5. Select events:Update design information.
+
+   - `payment_intent.succeeded`
+
+   - `payment_intent.payment_failed`**Access**: Admin Only
+
+   - `payment_intent.canceled`
+
+6. Copy signing secret and add to production environment variables### Delete Design
+
+---#### DELETE `/designs/:id`
+
+## 🚢 DeploymentRemove a design from the marketplace.
+
+### Vercel**Access**: Admin Only
+
+1. **Install Vercel CLI**### Get Design Analytics
+
+   ```bash
+
+   npm i -g vercel#### GET `/designs/analytics`
+
+   ```
 
 Get comprehensive design analytics and statistics.
 
-**Access**: Admin Only  
-**Query Parameters**:
+2. **Deploy**
+
+   ```bash**Access**: Admin Only
+
+   vercel**Query Parameters**:
+
+   ```
 
 - `startDate`, `endDate`: Date range
-- `designId`: Specific design analytics
-- `groupBy`: day, week, month
+
+3. **Add environment variables**- `designId`: Specific design analytics
+
+   - Go to Vercel Dashboard → Project → Settings → Environment Variables- `groupBy`: day, week, month
+
+   - Add all variables from `.env`
 
 **Response** (200):
 
-```json
-{
-  "success": true,
-  "data": {
-    "totalDesigns": 1250,
-    "totalDownloads": 45680,
-    "totalRevenue": 125750.5,
-    "averageRating": 4.6,
-    "topCategories": [
-      {
-        "category": "Logo Design",
-        "count": 245,
-        "revenue": 35000
-      }
-    ],
-    "monthlyStats": [
-      {
-        "month": "2025-01",
-        "designs": 45,
-        "downloads": 2340,
-        "revenue": 5670.25
-      }
-    ]
-  }
-}
-```
+4.  **Configure vercel.json** (already included)
 
----
+    `json`json
+
+    {{
+
+    "version": 2, "success": true,
+
+    "builds": [ "data": {
+
+        {    "totalDesigns": 1250,
+
+          "src": "src/server.ts",    "totalDownloads": 45680,
+
+          "use": "@vercel/node"    "totalRevenue": 125750.5,
+
+        }    "averageRating": 4.6,
+
+    ], "topCategories": [
+
+    "routes": [ {
+
+        {        "category": "Logo Design",
+
+          "src": "/(.*)",        "count": 245,
+
+          "dest": "src/server.ts"        "revenue": 35000
+
+        }      }
+
+    ] ],
+
+    } "monthlyStats": [
+
+    ```{
+
+         "month": "2025-01",
+    ```
+
+### Heroku "designs": 45,
+
+        "downloads": 2340,
+
+```````bash "revenue": 5670.25
+
+# Login      }
+
+heroku login    ]
+
+  }
+
+# Create app}
+
+heroku create your-app-name```
+
+
+
+# Add MongoDB---
+
+heroku addons:create mongolab
 
 ## 💰 Pricing Plans
 
-### Get Active Pricing Plans
+# Set environment variables
 
-#### GET `/pricing-plans/active`
+heroku config:set JWT_SECRET=your-secret### Get Active Pricing Plans
 
-Retrieve all active subscription plans.
+heroku config:set STRIPE_SECRET_KEY=sk_live_...
 
-**Access**: Public  
-**Response** (200):
+# ... add all variables#### GET `/pricing-plans/active`
 
-```json
+
+
+# DeployRetrieve all active subscription plans.
+
+git push heroku main
+
+**Access**: Public
+
+# View logs**Response** (200):
+
+heroku logs --tail
+
+``````json
+
 {
-  "success": true,
+
+### Railway  "success": true,
+
   "data": [
-    {
-      "_id": "64f8a1b2c3d4e5f6789abcde",
-      "name": "Premium Plan",
-      "description": "Full access to all premium features",
+
+1. Connect GitHub repository    {
+
+2. Select backend folder      "_id": "64f8a1b2c3d4e5f6789abcde",
+
+3. Add environment variables in dashboard      "name": "Premium Plan",
+
+4. Deploy automatically on push      "description": "Full access to all premium features",
+
       "price": 99.99,
-      "originalPrice": 149.99,
+
+---      "originalPrice": 149.99,
+
       "discountPercentage": 33,
-      "features": [
+
+## 🐛 Troubleshooting      "features": [
+
         "Unlimited downloads",
-        "Premium support",
+
+### Common Issues        "Premium support",
+
         "Advanced analytics",
-        "Custom design requests"
-      ],
-      "duration": "1 month",
-      "maxDesigns": 100,
-      "maxDownloads": 1000,
+
+#### 1. Database Connection Failed        "Custom design requests"
+
+```      ],
+
+Error: MongoServerError: Authentication failed      "duration": "1 month",
+
+```      "maxDesigns": 100,
+
+**Solution**: Check `DB_URI` in `.env`. Ensure username/password are correct and special characters are URL-encoded.      "maxDownloads": 1000,
+
       "priority": 1,
-      "isActive": true,
-      "validUntil": "2025-12-31T23:59:59.000Z"
-    }
-  ]
-}
-```
 
-### Create Pricing Plan
+#### 2. Stripe Webhook Verification Failed      "isActive": true,
 
-#### POST `/pricing-plans`
+```      "validUntil": "2025-12-31T23:59:59.000Z"
 
-Create a new subscription plan.
+Error: No signatures found matching the expected signature    }
 
-**Access**: Admin Only  
+```  ]
+
+**Solution**: }
+
+- Ensure `STRIPE_WEBHOOK_SECRET` is set correctly```
+
+- Make sure webhook route is BEFORE `express.json()` middleware (already configured)
+
+- Run `stripe listen` for local development### Create Pricing Plan
+
+
+
+#### 3. Cloudinary Upload Failed#### POST `/pricing-plans`
+
+```````
+
+Error: Must supply cloud_nameCreate a new subscription plan.
+
+```````
+
+**Solution**: Check Cloudinary credentials in `.env`**Access**: Admin Only
+
 **Request Body**:
 
-```json
-{
-  "name": "Professional Plan",
-  "description": "Perfect for professional designers",
-  "price": 49.99,
-  "features": ["50 downloads per month", "Email support", "Standard templates"],
-  "duration": "1 month",
-  "maxDesigns": 50,
-  "maxDownloads": 50,
-  "priority": 2,
-  "isActive": true,
-  "discountPercentage": 20,
-  "validUntil": "2025-12-31T23:59:59.000Z"
+#### 4. CORS Error from Frontend
+
+``````json
+
+Access to XMLHttpRequest has been blocked by CORS policy{
+
+```  "name": "Professional Plan",
+
+**Solution**: Add your frontend URL to CORS whitelist in `src/app.ts`:  "description": "Perfect for professional designers",
+
+```typescript  "price": 49.99,
+
+cors({  "features": ["50 downloads per month", "Email support", "Standard templates"],
+
+  origin: [  "duration": "1 month",
+
+    "http://localhost:3000",  "maxDesigns": 50,
+
+    "https://your-frontend-domain.com"  "maxDownloads": 50,
+
+  ],  "priority": 2,
+
+  credentials: true  "isActive": true,
+
+})  "discountPercentage": 20,
+
+```  "validUntil": "2025-12-31T23:59:59.000Z"
+
 }
-```
 
-### Get All Pricing Plans
+#### 5. JWT Token Invalid```
 
-#### GET `/pricing-plans`
+```````
 
-Retrieve all pricing plans with filtering (admin only).
+Error: jwt malformed### Get All Pricing Plans
 
-**Access**: Admin Only  
+````
+
+**Solution**: Ensure `JWT_SECRET` is set in `.env` and matches between backend restarts#### GET `/pricing-plans`
+
+
+
+---Retrieve all pricing plans with filtering (admin only).
+
+
+
+## 📊 API Response Format**Access**: Admin Only
+
 **Query Parameters**:
 
-- Standard pagination and sorting options
-- `isActive`: Filter by active status
+### Success Response
 
-### Update Pricing Plan
+```json- Standard pagination and sorting options
 
-#### PUT `/pricing-plans/:id`
+{- `isActive`: Filter by active status
 
-Update an existing pricing plan.
+  "success": true,
+
+  "message": "Operation successful",### Update Pricing Plan
+
+  "data": {
+
+    // Response data#### PUT `/pricing-plans/:id`
+
+  }
+
+}Update an existing pricing plan.
+
+````
 
 **Access**: Admin Only
 
-### Get Pricing Plan Analytics
+### Error Response
 
-#### GET `/pricing-plans/analytics`
+```json### Get Pricing Plan Analytics
 
-Get pricing plan performance analytics.
+{
 
-**Access**: Admin Only
+  "success": false,#### GET `/pricing-plans/analytics`
 
----
+  "message": "Error description",
+
+  "error": "Detailed error message",Get pricing plan performance analytics.
+
+  "errorDetails": {
+
+    // Additional error info**Access**: Admin Only
+
+  }
+
+}---
+
+```
 
 ## 🛒 Purchases
 
+---
+
 ### Create Purchase
+
+## 🔒 Security Best Practices
 
 #### POST `/purchases`
 
-Create a new purchase/subscription.
+- ✅ Environment variables for sensitive data
 
-**Access**: Authenticated Customers  
-**Request Body**:
+- ✅ JWT tokens with expirationCreate a new purchase/subscription.
 
-```json
+- ✅ Password hashing with bcrypt
+
+- ✅ CORS configuration**Access**: Authenticated Customers
+
+- ✅ Input validation with Zod**Request Body**:
+
+- ✅ Rate limiting (implement with `express-rate-limit`)
+
+- ✅ Helmet for security headers (recommended)```json
+
 {
-  "pricingPlan": "64f8a1b2c3d4e5f6789abcde",
-  "paymentMethod": "credit_card",
-  "paymentDetails": {
+
+--- "pricingPlan": "64f8a1b2c3d4e5f6789abcde",
+
+"paymentMethod": "credit_card",
+
+## 📝 Testing "paymentDetails": {
+
     "cardNumber": "**** **** **** 1234",
-    "expiryDate": "12/26",
+
+Use the included Postman collection: "expiryDate": "12/26",
+
     "cvv": "***",
-    "cardholderName": "John Doe"
-  },
-  "billingAddress": {
-    "street": "123 Main Street",
-    "city": "New York",
-    "state": "NY",
-    "zipCode": "10001",
+
+1. Import `Ecommerce Design Selling API.postman_collection.json` "cardholderName": "John Doe"
+
+2. Set environment variables: },
+
+   - `BASE_URL`: `http://localhost:5000/api` "billingAddress": {
+
+   - `TOKEN`: Your JWT token after login "street": "123 Main Street",
+
+3. Run requests in order (Register → Login → Test endpoints) "city": "New York",
+
+   "state": "NY",
+
+--- "zipCode": "10001",
+
     "country": "USA"
-  },
-  "notes": "First purchase - excited to try premium features!"
-}
-```
 
-**Response** (201):
+## 🤝 Contributing },
 
-```json
-{
+"notes": "First purchase - excited to try premium features!"
+
+1. Fork the repository}
+
+2. Create feature branch (`git checkout -b feature/amazing-feature`)```
+
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+
+4. Push to branch (`git push origin feature/amazing-feature`)**Response** (201):
+
+5. Open Pull Request
+
+````json
+
+---{
+
   "success": true,
-  "message": "Purchase created successfully",
+
+## 📄 License  "message": "Purchase created successfully",
+
   "data": {
-    "_id": "64f8a1b2c3d4e5f6789abcde",
+
+This project is licensed under the ISC License.    "_id": "64f8a1b2c3d4e5f6789abcde",
+
     "user": "64f8a1b2c3d4e5f6789abcdf",
-    "pricingPlan": {
+
+---    "pricingPlan": {
+
       "_id": "64f8a1b2c3d4e5f6789abcde",
-      "name": "Premium Plan",
+
+## 👤 Author      "name": "Premium Plan",
+
       "price": 99.99
-    },
+
+**Rimon Hossain**    },
+
     "amount": 99.99,
-    "status": "pending",
+
+---    "status": "pending",
+
     "paymentMethod": "credit_card",
-    "purchaseDate": "2025-01-20T15:30:00.000Z",
+
+## 📞 Support    "purchaseDate": "2025-01-20T15:30:00.000Z",
+
     "expiryDate": "2025-02-20T15:30:00.000Z"
-  }
-}
-```
 
-### Get My Purchases
+For issues or questions:  }
 
-#### GET `/purchases/my-purchases`
+- Check [Troubleshooting](#troubleshooting) section}
 
-Retrieve current user's purchase history.
+- Review API documentation above```
 
-**Access**: Authenticated Customers  
-**Query Parameters**:
+- Check MongoDB connection strings
 
-- `page`, `limit`: Pagination
-- `status`: pending, active, expired, cancelled
+- Verify all environment variables are set### Get My Purchases
 
-### Get All Purchases
+
+
+---#### GET `/purchases/my-purchases`
+
+
+
+## 🎯 Quick Start ChecklistRetrieve current user's purchase history.
+
+
+
+- [ ] Node.js v18+ installed**Access**: Authenticated Customers
+
+- [ ] MongoDB running (local or Atlas)**Query Parameters**:
+
+- [ ] `.env` file created with all variables
+
+- [ ] Dependencies installed (`npm install`)- `page`, `limit`: Pagination
+
+- [ ] Stripe CLI running for local webhook testing- `status`: pending, active, expired, cancelled
+
+- [ ] Server running (`npm run start:dev`)
+
+- [ ] API health check passes: `GET /api/health`### Get All Purchases
+
+- [ ] Frontend configured to point to this API
 
 #### GET `/purchases`
 
+---
+
 Retrieve all purchases with filtering.
+
+**Made with ❤️ for designers and developers**
 
 **Access**: Admin Only
 
@@ -636,7 +1236,7 @@ Retrieve all purchases with filtering.
 
 Update purchase status (payment processing, activation, etc.).
 
-**Access**: Admin Only  
+**Access**: Admin Only
 **Request Body**:
 
 ```json
@@ -644,7 +1244,7 @@ Update purchase status (payment processing, activation, etc.).
   "status": "active",
   "adminNotes": "Payment verified and approved"
 }
-```
+````
 
 ### Cancel Purchase
 

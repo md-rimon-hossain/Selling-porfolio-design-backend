@@ -17,7 +17,11 @@ const userSchema = new mongoose_1.Schema({
     },
     password: {
         type: String,
-        required: [true, "Password is required"],
+        // Password only required for local auth (not OAuth)
+        required: function () {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return this.authProvider === "local";
+        },
         minlength: [6, "Password must be at least 6 characters"],
         select: false,
     },
@@ -37,6 +41,22 @@ const userSchema = new mongoose_1.Schema({
     profileImage: {
         type: String,
         default: null,
+    },
+    // OAuth fields
+    googleId: {
+        type: String,
+        sparse: true,
+        index: true,
+    },
+    githubId: {
+        type: String,
+        sparse: true,
+        index: true,
+    },
+    authProvider: {
+        type: String,
+        enum: ["local", "google", "github"],
+        default: "local",
     },
 }, {
     timestamps: true,

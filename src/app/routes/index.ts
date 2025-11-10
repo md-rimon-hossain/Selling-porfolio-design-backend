@@ -8,6 +8,7 @@ import reviewRoutes from "../modules/review/review.routes";
 import downloadRoutes from "../modules/download/download.routes";
 import likeRoutes from "../modules/like/like.routes";
 import { userRoutes } from "../modules/user/user.routes";
+import { PaymentRoutes } from "../modules/payments/payment.routes";
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use("/purchases", purchaseRoutes);
 router.use("/reviews", reviewRoutes);
 router.use("/downloads", downloadRoutes);
 router.use("/likes", likeRoutes);
+router.use("/payments", PaymentRoutes);
 
 export default router;

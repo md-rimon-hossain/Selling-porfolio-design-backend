@@ -186,7 +186,7 @@ const createPurchase = (req, res) => __awaiter(void 0, void 0, void 0, function*
         let selectFields = "";
         if (purchaseType === "individual") {
             populateField = "design";
-            selectFields = "title price images";
+            selectFields = "title discountedPrice basePrice images";
         }
         else {
             populateField = "pricingPlan";
@@ -259,7 +259,7 @@ const getAllPurchases = (req, res) => __awaiter(void 0, void 0, void 0, function
         sort[sortBy] = sortOrder === "desc" ? -1 : 1;
         const purchases = yield purchase_model_1.Purchase.find(filter)
             .populate("user", "name email")
-            .populate("design", "title price")
+            .populate("design", "title basePrice discountedPrice currencyDisplay currencyCode")
             .populate("pricingPlan", "name description price finalPrice duration")
             .sort(sort)
             .skip(skip)
@@ -313,7 +313,7 @@ const getUserPurchases = (req, res) => __awaiter(void 0, void 0, void 0, functio
         sort[sortBy] = sortOrder === "desc" ? -1 : 1;
         const purchases = yield purchase_model_1.Purchase.find(filter)
             .populate("pricingPlan", "name description features duration price finalPrice")
-            .populate("design", "title price images")
+            .populate("design", "title price basePrice discountedPrice currencyDisplay currencyCode")
             .sort(sort)
             .skip(skip)
             .limit(limitNum)
