@@ -378,7 +378,7 @@ const getUserDownloads = (req, res) => __awaiter(void 0, void 0, void 0, functio
         sort[sortBy] = sortOrder === "desc" ? -1 : 1;
         const downloads = yield download_model_1.Download.find(filter)
             .populate("design", "title previewImageUrl price designerName")
-            .populate("purchase", "purchaseType amount")
+            .populate("purchase", "purchaseType amount currency currencyDisplay currencyDisplay")
             .sort(sort)
             .skip(skip)
             .limit(limitNum)
