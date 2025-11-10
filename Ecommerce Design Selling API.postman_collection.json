@@ -229,6 +229,120 @@
             "url": "{{base_url}}/auth/logout"
           },
           "response": []
+        },
+        {
+          "name": "OAuth Sync (Google Login)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('oauth_token', response.data.token);",
+                  "    pm.environment.set('oauth_user_id', response.data.user.id);",
+                  "    pm.test('OAuth sync successful', function () {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "        pm.expect(response.data.user).to.have.property('email');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@gmail.com\",\n  \"image\": \"https://lh3.googleusercontent.com/a/sample-image\",\n  \"provider\": \"google\",\n  \"providerId\": \"1234567890\"\n}"
+            },
+            "url": "{{base_url}}/auth/oauth",
+            "description": "Simulate NextAuth sending Google OAuth user data to backend for sync"
+          },
+          "response": []
+        },
+        {
+          "name": "OAuth Sync (GitHub Login)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('oauth_token', response.data.token);",
+                  "    pm.environment.set('oauth_user_id', response.data.user.id);",
+                  "    pm.test('OAuth sync successful', function () {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "        pm.expect(response.data.user).to.have.property('email');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane.smith@example.com\",\n  \"image\": \"https://avatars.githubusercontent.com/u/12345678\",\n  \"provider\": \"github\",\n  \"providerId\": \"98765432\"\n}"
+            },
+            "url": "{{base_url}}/auth/oauth",
+            "description": "Simulate NextAuth sending GitHub OAuth user data to backend for sync"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ OAuth Sync - Missing Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"provider\": \"google\",\n  \"providerId\": \"123\"\n}"
+            },
+            "url": "{{base_url}}/auth/oauth",
+            "description": "Test OAuth sync validation - email is required"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ OAuth Sync - Invalid Provider",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"provider\": \"facebook\",\n  \"providerId\": \"123\"\n}"
+            },
+            "url": "{{base_url}}/auth/oauth",
+            "description": "Test OAuth sync with unsupported provider"
+          },
+          "response": []
         }
       ]
     },

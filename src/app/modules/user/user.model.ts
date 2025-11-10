@@ -1,9 +1,6 @@
 import { Schema, model } from "mongoose";
 import type { IUser } from "./user.interface";
 
-
-
-
 const userSchema = new Schema<IUser>(
   {
     name: {
@@ -20,13 +17,17 @@ const userSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
+      // Password only required for local auth (not OAuth)
+      required: function () {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (this as any).authProvider === "local";
+      },
       minlength: [6, "Password must be at least 6 characters"],
-      select: false, 
+      select: false,
     },
     role: {
       type: String,
-      enum: ["super_admin","admin", "customer", "designer", "instructor"],
+      enum: ["super_admin", "admin", "customer", "designer", "instructor"],
       default: "customer",
     },
     isActive: {
@@ -41,14 +42,27 @@ const userSchema = new Schema<IUser>(
       type: String,
       default: null,
     },
+    // OAuth fields
+    googleId: {
+      type: String,
+      sparse: true,
+      index: true,
+    },
+    githubId: {
+      type: String,
+      sparse: true,
+      index: true,
+    },
+    authProvider: {
+      type: String,
+      enum: ["local", "google", "github"],
+      default: "local",
+    },
   },
   {
     timestamps: true,
     versionKey: false,
-  }
+  },
 );
-
-
-
 
 export const User = model<IUser>("User", userSchema);
