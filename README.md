@@ -1,10 +1,6 @@
 # 🎨 Design Portfolio Marketplace - Backend API# 🎨 Ecommerce Design Platform - Complete API Documentation
 
-
-
 > A robust, production-ready Express.js REST API for a design marketplace platform with user authentication, OAuth integration, payment processing, and file management.## 📋 Table of Contents
-
-
 
 ---- [Overview](#overview)
 
@@ -14,19 +10,19 @@
 
 - [API Endpoints](#api-endpoints)
 
-- [Overview](#overview)  - [Health Check](#health-check)
+- [Overview](#overview) - [Health Check](#health-check)
 
-- [Tech Stack](#tech-stack)  - [Authentication](#authentication-endpoints)
+- [Tech Stack](#tech-stack) - [Authentication](#authentication-endpoints)
 
-- [Features](#features)  - [Categories](#categories)
+- [Features](#features) - [Categories](#categories)
 
-- [Getting Started](#getting-started)  - [Designs](#designs)
+- [Getting Started](#getting-started) - [Designs](#designs)
 
-- [Environment Variables](#environment-variables)  - [Pricing Plans](#pricing-plans)
+- [Environment Variables](#environment-variables) - [Pricing Plans](#pricing-plans)
 
-- [API Endpoints](#api-endpoints)  - [Purchases](#purchases)
+- [API Endpoints](#api-endpoints) - [Purchases](#purchases)
 
-- [Project Structure](#project-structure)  - [Reviews](#reviews)
+- [Project Structure](#project-structure) - [Reviews](#reviews)
 
 - [Development](#development)- [Testing Guide](#testing-guide)
 
@@ -142,8 +138,6 @@ This is the backend API for a design marketplace platform where users can:
 
 - ✅ Download tracking and analyticsnpm run build
 
-
-
 ### Admin Features# Start development server
 
 - ✅ User managementnpm run start:dev
@@ -154,7 +148,7 @@ This is the backend API for a design marketplace platform where users can:
 
 - ✅ Analytics dashboard datanpm start
 
-```
+````
 
 ---
 
@@ -190,9 +184,7 @@ PORT=5000
 
    cd backendProduction: https://your-domain.com/api/v1
 
-   ``````
-
-
+````
 
 2. **Install dependencies**---
 
@@ -206,11 +198,12 @@ The API uses **JWT (JSON Web Token)** authentication with role-based access cont
 
 3. **Create environment file**
 
-   ```bash### User Roles
+   ````bash### User Roles
 
    cp .env.example .env
 
    ```- **Admin**: Full access to all endpoints including analytics and management
+   ````
 
 - **Customer**: Access to public endpoints, purchases, and personal data
 
@@ -220,17 +213,15 @@ The API uses **JWT (JSON Web Token)** authentication with role-based access cont
 
 5. **Start development server**
 
-   ```bash```http
+   `bash`http
 
    npm run start:devAuthorization: Bearer <your-jwt-token>
 
-   ``````
+   ```
 
-
+   ```
 
 The API will be available at `http://localhost:5000`### Token Lifecycle
-
-
 
 ---- **Expiration**: 7 days (configurable)
 
@@ -238,13 +229,9 @@ The API will be available at `http://localhost:5000`### Token Lifecycle
 
 ## 🔐 Environment Variables- **Storage**: Client-side storage (localStorage/sessionStorage recommended)
 
-
-
 Create a `.env` file in the backend root directory:---
 
-
-
-```bash## 📋 API Endpoints
+````bash## 📋 API Endpoints
 
 # Server Configuration
 
@@ -260,7 +247,7 @@ DB_URI=mongodb://localhost:27017/design-marketplaceCheck API server status and c
 
 # Or use MongoDB Atlas:
 
-# DB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/design-marketplace**Access**: Public  
+# DB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/design-marketplace**Access**: Public
 
 **Response**:
 
@@ -302,31 +289,27 @@ STRIPE_WEBHOOK_SECRET=whsec_YOUR_WEBHOOK_SECRET
 
 FRONTEND_URL=http://localhost:3000Create a new user account.
 
-```
+````
 
-**Access**: Public  
+**Access**: Public
 
 ### 🔑 Getting API Keys**Request Body**:
-
-
 
 #### MongoDB Atlas```json
 
 1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas){
 
-2. Create a free cluster  "name": "John Doe",
+2. Create a free cluster "name": "John Doe",
 
-3. Get connection string from "Connect" → "Connect your application"  "email": "john@example.com",
+3. Get connection string from "Connect" → "Connect your application" "email": "john@example.com",
 
-  "password": "SecurePassword123!",
+"password": "SecurePassword123!",
 
-#### Cloudinary  "role": "customer"
+#### Cloudinary "role": "customer"
 
 1. Sign up at [Cloudinary](https://cloudinary.com/)}
 
 2. Find credentials in Dashboard → Account Details```
-
-
 
 #### Stripe**Response** (201):
 
@@ -336,19 +319,19 @@ FRONTEND_URL=http://localhost:3000Create a new user account.
 
 3. For webhook secret, see [Webhook Setup](#webhook-setup){
 
-  "success": true,
+"success": true,
 
----  "message": "User registered successfully",
+--- "message": "User registered successfully",
 
-  "data": {
+"data": {
 
-## 📡 API Endpoints    "_id": "64f8a1b2c3d4e5f6789abcde",
+## 📡 API Endpoints "\_id": "64f8a1b2c3d4e5f6789abcde",
 
     "name": "John Doe",
 
-### Base URL    "email": "john@example.com",
+### Base URL "email": "john@example.com",
 
-```    "role": "customer",
+```````"role": "customer",
 
 http://localhost:5000/api    "isActive": true,
 
@@ -374,7 +357,7 @@ POST   /api/auth/register          # Register new userAuthenticate user and rece
 
 POST   /api/auth/login             # Login with email/password
 
-POST   /api/auth/oauth             # OAuth login (Google/GitHub)**Access**: Public  
+POST   /api/auth/oauth             # OAuth login (Google/GitHub)**Access**: Public
 
 POST   /api/auth/refresh           # Refresh JWT token**Request Body**:
 
@@ -396,9 +379,9 @@ PATCH  /api/users/:id              # Update user
 
 DELETE /api/users/:id              # Delete user (Admin)**Response** (200):
 
-```
+```````
 
-```json
+````json
 
 ### Designs{
 
@@ -442,7 +425,7 @@ DELETE /api/designs/:id            # Delete design (Owner/Admin)      "name": "J
 
 GET    /api/categories             # Get all categories
 
-GET    /api/categories/:id         # Get category by ID**Access**: Authenticated Users  
+GET    /api/categories/:id         # Get category by ID**Access**: Authenticated Users
 
 POST   /api/categories             # Create category (Admin)**Request Body**:
 
@@ -468,7 +451,7 @@ PATCH  /api/pricing-plans/:id      # Update plan (Admin)
 
 DELETE /api/pricing-plans/:id      # Delete plan (Admin)## 📂 Categories
 
-```
+````
 
 ### Get All Categories
 
@@ -476,17 +459,17 @@ DELETE /api/pricing-plans/:id      # Delete plan (Admin)## 📂 Categories
 
 ```http#### GET `/categories`
 
-POST   /api/payments/create-payment-intent    # Create Stripe payment
+POST /api/payments/create-payment-intent # Create Stripe payment
 
-POST   /api/payments/confirm                  # Confirm paymentRetrieve all design categories with optional filtering.
+POST /api/payments/confirm # Confirm paymentRetrieve all design categories with optional filtering.
 
-POST   /api/payments/webhook                  # Stripe webhook (raw body)
+POST /api/payments/webhook # Stripe webhook (raw body)
 
-GET    /api/payments                          # Get all payments (Admin)**Access**: Public  
+GET /api/payments # Get all payments (Admin)**Access**: Public
 
-GET    /api/payments/user/:userId             # Get user payments**Query Parameters**:
+GET /api/payments/user/:userId # Get user payments**Query Parameters**:
 
-```
+````
 
 - `page` (number): Page number (default: 1)
 
@@ -500,19 +483,19 @@ GET    /api/purchases/:id                     # Get purchase details- `sortBy` (
 
 GET    /api/purchases/check/:designId         # Check if design purchased- `sortOrder` (string): asc | desc
 
-```
+````
 
 **Response** (200):
 
 ### Downloads
 
-```http```json
+`http`json
 
-GET    /api/downloads/:purchaseId            # Download purchased design{
+GET /api/downloads/:purchaseId # Download purchased design{
 
-GET    /api/downloads/history                # Get download history  "success": true,
+GET /api/downloads/history # Get download history "success": true,
 
-```  "message": "Categories retrieved successfully",
+````"message": "Categories retrieved successfully",
 
   "data": [
 
@@ -566,7 +549,7 @@ backend/
 
 │   │   │   ├── database.ts           # MongoDB connection
 
-│   │   │   └── index.ts               # Config loader**Access**: Admin Only  
+│   │   │   └── index.ts               # Config loader**Access**: Admin Only
 
 │   │   ├── middlewares/**Request Body**:
 
@@ -630,7 +613,7 @@ backend/
 
 └── README.mdDelete a category (soft delete).
 
-```
+````
 
 **Access**: Admin Only
 
@@ -646,7 +629,7 @@ backend/
 
 ### Get All Designs
 
-```bash
+````bash
 
 # Development with auto-reload#### GET `/designs`
 
@@ -656,7 +639,7 @@ Retrieve all designs with advanced filtering and search.
 
 # Production build
 
-npm run build**Access**: Public  
+npm run build**Access**: Public
 
 **Query Parameters**:
 
@@ -736,57 +719,55 @@ Stripe webhooks are required for payment confirmation.        "count": 156
 
    scoop install stripe}
 
-   ```
+````
 
-   # macOS
+# macOS
 
-   brew install stripe/stripe-cli/stripe### Upload Design
+brew install stripe/stripe-cli/stripe### Upload Design
 
-   ```
+````
 
 #### POST `/designs`
 
 2. **Login to Stripe**
 
-   ```bashUpload a new design to the marketplace.
+```bashUpload a new design to the marketplace.
 
-   stripe login
+stripe login
 
-   ```**Access**: Admin Only  
+```**Access**: Admin Only
 
 **Request Body**:
 
 3. **Forward webhooks to local server**
 
-   ```bash```json
+```bash```json
 
-   stripe listen --forward-to localhost:5000/api/payments/webhook{
+stripe listen --forward-to localhost:5000/api/payments/webhook{
 
-   ```  "title": "Minimalist Business Card Set",
+```  "title": "Minimalist Business Card Set",
 
-  "description": "Clean and professional business card designs",
+"description": "Clean and professional business card designs",
 
 4. **Copy webhook secret**  "price": 29.99,
 
-   The CLI will display:  "category": "64f8a1b2c3d4e5f6789abcdf",
+The CLI will display:  "category": "64f8a1b2c3d4e5f6789abcdf",
 
-   ```  "tags": ["business-card", "minimalist", "professional"],
+```  "tags": ["business-card", "minimalist", "professional"],
 
-   > Ready! Your webhook signing secret is whsec_...  "images": ["preview1.jpg", "preview2.jpg"],
+> Ready! Your webhook signing secret is whsec_...  "images": ["preview1.jpg", "preview2.jpg"],
 
-   ```  "files": ["business-cards.zip"],
+```  "files": ["business-cards.zip"],
 
-     "requirements": "Adobe Illustrator CS6 or higher",
+  "requirements": "Adobe Illustrator CS6 or higher",
 
-   Add this to `.env`:  "license": "Commercial use allowed",
+Add this to `.env`:  "license": "Commercial use allowed",
 
-   ```bash  "isActive": true
+```bash  "isActive": true
 
-   STRIPE_WEBHOOK_SECRET=whsec_YOUR_SECRET_HERE}
+STRIPE_WEBHOOK_SECRET=whsec_YOUR_SECRET_HERE}
 
-   ``````
-
-
+````
 
 5. **Test payments**### Get Single Design
 
@@ -798,11 +779,7 @@ Stripe webhooks are required for payment confirmation.        "count": 156
 
    - Any future date for expiry, any 3-digit CVCRetrieve detailed information about a specific design.
 
-
-
 ### Production (Deployed Backend)**Access**: Public
-
-
 
 1. Go to [Stripe Dashboard](https://dashboard.stripe.com)### Update Design
 
@@ -822,19 +799,11 @@ Stripe webhooks are required for payment confirmation.        "count": 156
 
 6. Copy signing secret and add to production environment variables### Delete Design
 
-
-
 ---#### DELETE `/designs/:id`
-
-
 
 ## 🚢 DeploymentRemove a design from the marketplace.
 
-
-
 ### Vercel**Access**: Admin Only
-
-
 
 1. **Install Vercel CLI**### Get Design Analytics
 
@@ -848,7 +817,7 @@ Get comprehensive design analytics and statistics.
 
 2. **Deploy**
 
-   ```bash**Access**: Admin Only  
+   ```bash**Access**: Admin Only
 
    vercel**Query Parameters**:
 
@@ -864,49 +833,50 @@ Get comprehensive design analytics and statistics.
 
 **Response** (200):
 
-4. **Configure vercel.json** (already included)
+4.  **Configure vercel.json** (already included)
 
-   ```json```json
+    `json`json
 
-   {{
+    {{
 
-     "version": 2,  "success": true,
+    "version": 2, "success": true,
 
-     "builds": [  "data": {
+    "builds": [ "data": {
 
-       {    "totalDesigns": 1250,
+        {    "totalDesigns": 1250,
 
-         "src": "src/server.ts",    "totalDownloads": 45680,
+          "src": "src/server.ts",    "totalDownloads": 45680,
 
-         "use": "@vercel/node"    "totalRevenue": 125750.5,
+          "use": "@vercel/node"    "totalRevenue": 125750.5,
 
-       }    "averageRating": 4.6,
+        }    "averageRating": 4.6,
 
-     ],    "topCategories": [
+    ], "topCategories": [
 
-     "routes": [      {
+    "routes": [ {
 
-       {        "category": "Logo Design",
+        {        "category": "Logo Design",
 
-         "src": "/(.*)",        "count": 245,
+          "src": "/(.*)",        "count": 245,
 
-         "dest": "src/server.ts"        "revenue": 35000
+          "dest": "src/server.ts"        "revenue": 35000
 
-       }      }
+        }      }
 
-     ]    ],
+    ] ],
 
-   }    "monthlyStats": [
+    } "monthlyStats": [
 
-   ```      {
+    ```{
 
-        "month": "2025-01",
+         "month": "2025-01",
+    ```
 
-### Heroku        "designs": 45,
+### Heroku "designs": 45,
 
         "downloads": 2340,
 
-```bash        "revenue": 5670.25
+```````bash "revenue": 5670.25
 
 # Login      }
 
@@ -940,7 +910,7 @@ heroku config:set STRIPE_SECRET_KEY=sk_live_...
 
 git push heroku main
 
-**Access**: Public  
+**Access**: Public
 
 # View logs**Response** (200):
 
@@ -1008,13 +978,13 @@ Error: No signatures found matching the expected signature    }
 
 #### 3. Cloudinary Upload Failed#### POST `/pricing-plans`
 
-```
+```````
 
 Error: Must supply cloud_nameCreate a new subscription plan.
 
-```
+```````
 
-**Solution**: Check Cloudinary credentials in `.env`**Access**: Admin Only  
+**Solution**: Check Cloudinary credentials in `.env`**Access**: Admin Only
 
 **Request Body**:
 
@@ -1050,11 +1020,11 @@ cors({  "features": ["50 downloads per month", "Email support", "Standard templa
 
 #### 5. JWT Token Invalid```
 
-```
+```````
 
 Error: jwt malformed### Get All Pricing Plans
 
-```
+````
 
 **Solution**: Ensure `JWT_SECRET` is set in `.env` and matches between backend restarts#### GET `/pricing-plans`
 
@@ -1064,7 +1034,7 @@ Error: jwt malformed### Get All Pricing Plans
 
 
 
-## 📊 API Response Format**Access**: Admin Only  
+## 📊 API Response Format**Access**: Admin Only
 
 **Query Parameters**:
 
@@ -1086,7 +1056,7 @@ Error: jwt malformed### Get All Pricing Plans
 
 }Update an existing pricing plan.
 
-```
+````
 
 **Access**: Admin Only
 
@@ -1128,7 +1098,7 @@ Error: jwt malformed### Get All Pricing Plans
 
 - ✅ Password hashing with bcrypt
 
-- ✅ CORS configuration**Access**: Authenticated Customers  
+- ✅ CORS configuration**Access**: Authenticated Customers
 
 - ✅ Input validation with Zod**Request Body**:
 
@@ -1138,37 +1108,37 @@ Error: jwt malformed### Get All Pricing Plans
 
 {
 
----  "pricingPlan": "64f8a1b2c3d4e5f6789abcde",
+--- "pricingPlan": "64f8a1b2c3d4e5f6789abcde",
 
-  "paymentMethod": "credit_card",
+"paymentMethod": "credit_card",
 
-## 📝 Testing  "paymentDetails": {
+## 📝 Testing "paymentDetails": {
 
     "cardNumber": "**** **** **** 1234",
 
-Use the included Postman collection:    "expiryDate": "12/26",
+Use the included Postman collection: "expiryDate": "12/26",
 
     "cvv": "***",
 
-1. Import `Ecommerce Design Selling API.postman_collection.json`    "cardholderName": "John Doe"
+1. Import `Ecommerce Design Selling API.postman_collection.json` "cardholderName": "John Doe"
 
-2. Set environment variables:  },
+2. Set environment variables: },
 
-   - `BASE_URL`: `http://localhost:5000/api`  "billingAddress": {
+   - `BASE_URL`: `http://localhost:5000/api` "billingAddress": {
 
-   - `TOKEN`: Your JWT token after login    "street": "123 Main Street",
+   - `TOKEN`: Your JWT token after login "street": "123 Main Street",
 
-3. Run requests in order (Register → Login → Test endpoints)    "city": "New York",
+3. Run requests in order (Register → Login → Test endpoints) "city": "New York",
 
-    "state": "NY",
+   "state": "NY",
 
----    "zipCode": "10001",
+--- "zipCode": "10001",
 
     "country": "USA"
 
-## 🤝 Contributing  },
+## 🤝 Contributing },
 
-  "notes": "First purchase - excited to try premium features!"
+"notes": "First purchase - excited to try premium features!"
 
 1. Fork the repository}
 
@@ -1180,7 +1150,7 @@ Use the included Postman collection:    "expiryDate": "12/26",
 
 5. Open Pull Request
 
-```json
+````json
 
 ---{
 
@@ -1234,7 +1204,7 @@ For issues or questions:  }
 
 
 
-- [ ] Node.js v18+ installed**Access**: Authenticated Customers  
+- [ ] Node.js v18+ installed**Access**: Authenticated Customers
 
 - [ ] MongoDB running (local or Atlas)**Query Parameters**:
 
@@ -1266,7 +1236,7 @@ Retrieve all purchases with filtering.
 
 Update purchase status (payment processing, activation, etc.).
 
-**Access**: Admin Only  
+**Access**: Admin Only
 **Request Body**:
 
 ```json
@@ -1274,7 +1244,7 @@ Update purchase status (payment processing, activation, etc.).
   "status": "active",
   "adminNotes": "Payment verified and approved"
 }
-```
+````
 
 ### Cancel Purchase
 
