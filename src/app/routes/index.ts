@@ -9,12 +9,14 @@ import downloadRoutes from "../modules/download/download.routes";
 import likeRoutes from "../modules/like/like.routes";
 import { userRoutes } from "../modules/user/user.routes";
 import { PaymentRoutes } from "../modules/payments/payment.routes";
+import { courseRoutes } from "../modules/course/course.routes";
 
 const router = Router();
 
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
 router.use("/designs", designRoutes);
+router.use("/courses", courseRoutes);
 router.use("/categories", categoryRoutes);
 router.use("/pricing-plans", pricingPlanRoutes);
 router.use("/purchases", purchaseRoutes);

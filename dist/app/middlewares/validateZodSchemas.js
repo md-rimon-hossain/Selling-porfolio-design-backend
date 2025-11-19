@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateQuery = exports.validateParams = exports.validateBody = void 0;
+exports.validateRequest = exports.validateQuery = exports.validateParams = exports.validateBody = void 0;
 const zod_1 = require("zod");
 // Generic validation middleware factory
 const validate = (schema) => {
@@ -133,4 +133,43 @@ const validateQuery = (schema) => {
     });
 };
 exports.validateQuery = validateQuery;
+// Generic validation for combined schemas (body + params + query)
+const validateRequest = (schema) => {
+    return (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const validatedData = yield schema.parseAsync({
+                body: req.body,
+                query: req.query,
+                params: req.params,
+            });
+            if (validatedData.body)
+                req.body = validatedData.body;
+            if (validatedData.query)
+                req.query = validatedData.query;
+            if (validatedData.params)
+                req.params = validatedData.params;
+            next();
+        }
+        catch (error) {
+            if (error instanceof zod_1.ZodError) {
+                const validationErrors = error.issues.map((issue) => ({
+                    field: issue.path.join("."),
+                    message: issue.message,
+                }));
+                res.status(400).json({
+                    success: false,
+                    message: "Validation failed",
+                    errors: validationErrors,
+                });
+                return;
+            }
+            res.status(500).json({
+                success: false,
+                message: "Internal server error during validation",
+                error: error instanceof Error ? error.message : "Unknown error",
+            });
+        }
+    });
+};
+exports.validateRequest = validateRequest;
 exports.default = validate;

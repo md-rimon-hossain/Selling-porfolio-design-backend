@@ -26,6 +26,12 @@ const getAllCategories = async (req: Request, res: Response): Promise<void> => {
       isDeleted: false,
       parentCategory: null,
     };
+
+    // Filter by categoryType (design or course)
+    if (req.query.categoryType) {
+      filter.categoryType = req.query.categoryType;
+    }
+
     if (req.query.search) {
       filter.name = { $regex: String(req.query.search), $options: "i" };
     }
@@ -40,11 +46,9 @@ const getAllCategories = async (req: Request, res: Response): Promise<void> => {
         path: "subcategories",
         populate: {
           path: "parentCategory",
-          select: "name description"
-        }
+          select: "name description",
+        },
       });
-
-
 
     res.status(200).json({
       success: true,
@@ -134,9 +138,20 @@ const updateCategory = async (req: Request, res: Response): Promise<void> => {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const update: any = { ...req.body };
-    if (update.name) {
-      // keep slug in sync when updating name (findByIdAndUpdate won't trigger pre-save)
-      update.slug = simpleSlugify(update.name);
+    if (update.name || update.categoryType) {
+      // Fetch existing category to get categoryType if not in update
+      const existingCategory = await Category.findById(req.params.id);
+      if (!existingCategory) {
+        res.status(404).json({
+          success: false,
+          message: "Category not found",
+        });
+        return;
+      }
+      const categoryType = update.categoryType || existingCategory.categoryType;
+      const name = update.name || existingCategory.name;
+      // keep slug in sync when updating name or categoryType (findByIdAndUpdate won't trigger pre-save)
+      update.slug = `${categoryType}-${simpleSlugify(name)}`;
     }
 
     const category = await Category.findByIdAndUpdate(req.params.id, update, {

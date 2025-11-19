@@ -37,7 +37,7 @@ const moduleSchema = new Schema<IModule>(
     },
     description: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
 
@@ -82,7 +82,7 @@ const courseSchema = new Schema<ICourse>(
     subCategory: {
       type: Schema.Types.ObjectId,
       ref: "Category",
-      required: true,
+      required: false,
       index: true,
     },
     instructor: {
@@ -100,7 +100,7 @@ const courseSchema = new Schema<ICourse>(
       type: String,
       required: true,
     },
-    
+
     // Course Content (Modules)
     modules: {
       type: [moduleSchema],
