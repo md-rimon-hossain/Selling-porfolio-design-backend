@@ -14,10 +14,12 @@ const download_routes_1 = __importDefault(require("../modules/download/download.
 const like_routes_1 = __importDefault(require("../modules/like/like.routes"));
 const user_routes_1 = require("../modules/user/user.routes");
 const payment_routes_1 = require("../modules/payments/payment.routes");
+const course_routes_1 = require("../modules/course/course.routes");
 const router = (0, express_1.Router)();
 router.use("/auth", auth_routes_1.default);
 router.use("/users", user_routes_1.userRoutes);
 router.use("/designs", design_routes_1.default);
+router.use("/courses", course_routes_1.courseRoutes);
 router.use("/categories", category_routes_1.default);
 router.use("/pricing-plans", pricingPlan_routes_1.default);
 router.use("/purchases", purchase_routes_1.default);

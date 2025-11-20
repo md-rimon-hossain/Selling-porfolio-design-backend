@@ -21,6 +21,12 @@ export const createCategorySchema = z.object({
       .min(10, "Description must be at least 10 characters long")
       .max(200, "Description cannot exceed 200 characters"),
 
+    categoryType: z
+      .enum(["design", "course"], {
+        required_error: "Category type is required",
+      })
+      .default("design"),
+
     // parentCategory may be an ObjectId string or explicitly null (for top-level categories)
     parentCategory: z
       .string()
@@ -45,6 +51,9 @@ export const updateCategorySchema = z.object({
         "Category name can only contain letters and spaces",
       )
       .optional(),
+
+    categoryType: z.enum(["design", "course"]).optional(),
+
     // allow null to explicitly unset the parent (promotes to top-level)
     parentCategory: z
       .string()

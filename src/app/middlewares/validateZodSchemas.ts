@@ -154,4 +154,49 @@ export const validateQuery = (schema: AnyZodObject) => {
   };
 };
 
+// Generic validation for combined schemas (body + params + query)
+export const validateRequest = (schema: AnyZodObject) => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const validatedData = await schema.parseAsync({
+        body: req.body,
+        query: req.query,
+        params: req.params,
+      });
+
+      if (validatedData.body) req.body = validatedData.body;
+      if (validatedData.query) req.query = validatedData.query;
+      if (validatedData.params) req.params = validatedData.params;
+
+      next();
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationErrors: ValidationError[] = error.issues.map(
+          (issue) => ({
+            field: issue.path.join("."),
+            message: issue.message,
+          }),
+        );
+
+        res.status(400).json({
+          success: false,
+          message: "Validation failed",
+          errors: validationErrors,
+        });
+        return;
+      }
+
+      res.status(500).json({
+        success: false,
+        message: "Internal server error during validation",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+};
+
 export default validate;

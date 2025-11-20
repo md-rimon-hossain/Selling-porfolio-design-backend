@@ -5,6 +5,7 @@ export interface ICategory {
   name: string;
   slug?: string;
   description?: string;
+  categoryType: "design" | "course";
   isActive: boolean;
   parentCategory?: Types.ObjectId;
   isDeleted: boolean;
@@ -17,13 +18,18 @@ const categorySchema = new Schema<ICategory>(
     name: {
       type: String,
       required: [true, "Category name is required"],
-      unique: true,
       trim: true,
     },
     slug: {
       type: String,
-      unique: true,
       trim: true,
+      index: true,
+    },
+    categoryType: {
+      type: String,
+      enum: ["design", "course"],
+      required: [true, "Category type is required"],
+      default: "design",
       index: true,
     },
     parentCategory: {
@@ -66,15 +72,20 @@ function simpleSlugify(input: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-// Ensure slug is set before save
+// Ensure slug is set before save with categoryType prefix
 categorySchema.pre("save", function (next) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const doc = this as any;
   if (doc.isModified("name") || !doc.slug) {
-    doc.slug = simpleSlugify(doc.name);
+    const baseSlug = simpleSlugify(doc.name);
+    doc.slug = `${doc.categoryType}-${baseSlug}`;
   }
   next();
 });
+
+// Add compound unique index for name + categoryType
+categorySchema.index({ name: 1, categoryType: 1 }, { unique: true });
+categorySchema.index({ slug: 1 }, { unique: true });
 
 // Create a virtual to populate subcategories easily
 categorySchema.virtual("subcategories", {
